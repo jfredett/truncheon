@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::{collections::HashMap, marker::ConstParamTy};
 
 #[derive(Debug, PartialEq)]
@@ -17,7 +19,7 @@ struct IndexCoord<const ORIGIN: Origin, const DIRECTION: Direction> {
 
 #[derive(ConstParamTy, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
-enum Direction {
+pub enum Direction {
     LR_TB,
     RL_TB,
     LR_BT,
@@ -25,7 +27,7 @@ enum Direction {
 }
 
 #[derive(ConstParamTy, PartialEq, Eq)]
-enum Origin {
+pub enum Origin {
     TopLeft,
     TopRight,
     BottomLeft,
@@ -33,39 +35,48 @@ enum Origin {
 }
 
 #[derive(ConstParamTy, PartialEq, Eq)]
-enum OffsetType {
+pub enum OffsetType {
     OddQ,
     OddR,
     EvenQ,
     EvenR
 }
 
-struct OffsetCoord<const TYPE: OffsetType> {
+pub struct OffsetCoord<const TYPE: OffsetType> {
     x: isize,
     y: isize
 }
 
-/// A marker trait for which mutually implement from/into different classes of hex coordinate
-// trait HexCoord {
-// }
-
-
-struct Hex {
-    // tile_img: String // path to tile image
-    // terrain: () // enum eventually
-    // features: vec![] // vec of enums?
-}
-
-pub struct Hexfield<const WIDTH: usize, const HEIGHT: usize, T> {
+///
+/// ```
+/// assert!(true);
+///
+/// ```
+#[derive(Debug)]
+pub struct Hexfield<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECTION: Direction, T> where T : Clone {
     contents: HashMap<AxialCoord, T>
 }
 
-/// A type which can contain hexes indexed by HexCoord.
-// trait Hexfield<T> {
-//     fn set(&mut self, c: impl HexCoord, content: T);
-//     fn get(&self, c: impl HexCoord) -> &T;
-//     fn get_mut(&mut self, c: impl HexCoord) -> &mut T;
-// }
+impl<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECTION: Direction, T>
+    Hexfield<WIDTH, HEIGHT, ORIGIN, DIRECTION, T>
+where T : Clone {
+
+    pub fn new() -> Self {
+        Hexfield {
+            contents: HashMap::new()
+        }
+    }
+}
+
+
+pub enum HexMovement {
+    N,
+    NE,
+    NW,
+    S,
+    SE,
+    SW
+}
 
 #[cfg(test)]
 mod tests {
@@ -73,8 +84,8 @@ mod tests {
     use rstest::rstest;
 
     #[rstest]
-    fn coordinate_conversion_works() {
-
+    fn it_works() {
+        let field : Hexfield<10, 10, { Origin::TopLeft }, { Direction::LR_TB }, ()> = Hexfield::new();
 
     }
 

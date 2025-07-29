@@ -1,7 +1,8 @@
 #![feature(adt_const_params)]
 
-pub mod hex;
+use truncheon::hex::{self, Direction, Origin};
 
 fn main() {
-    println!("Hello, world!");
+    let field : hex::Hexfield<10, 10, {Origin::TopLeft}, {Direction::LR_TB}, ()> = hex::Hexfield::new();
+    println!("Debug: {:?}", field);
 }

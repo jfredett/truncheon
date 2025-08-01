@@ -1,7 +1,7 @@
 #[cfg(test)]
 use derive_quickcheck_arbitrary::Arbitrary;
 
-use crate::hex::coord::axial::AxialVector;
+use crate::hex::coord::axial::vector::AxialVector;
 
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]

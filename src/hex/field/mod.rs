@@ -1,7 +1,7 @@
 
 use std::{collections::HashMap, marker::ConstParamTy, ops::{Index, IndexMut}};
 
-use crate::hex::coord::axial::Axial;
+use crate::hex::coord::axial::point::Axial;
 
 // NOTE: Should this be combined w/ above `Direction`/`FieldOrientation`? I want to support spiral
 // coords and such too at some point.
@@ -10,7 +10,7 @@ pub enum Origin {
     TopLeft,
     TopRight,
     BottomLeft,
-    BottomRight
+    BottomRight,
 }
 
 // TODO: Maybe this should be "FieldOrientation" or something like? Would be cool to support spiral
@@ -32,7 +32,6 @@ pub struct Hexfield<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origi
 impl<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECTION: Direction, T>
     Hexfield<WIDTH, HEIGHT, ORIGIN, DIRECTION, T>
 where T : Clone {
-
     pub fn new() -> Self {
         Hexfield {
             contents: HashMap::new()
@@ -77,8 +76,7 @@ mod test {
     use super::*;
 
     #[rstest]
-    #[tracing_test::traced_test]
-    fn it_works() {
+    fn insert_and_retrieve() {
         let mut field : Hexfield<10, 10, { Origin::TopLeft }, { Direction::LR_TB }, isize> = Hexfield::new();
         let coord = Axial::new(0,0);
         let coord2 = Axial::new(0,1);

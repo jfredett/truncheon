@@ -39,7 +39,7 @@ https://www.redblobgames.com/grids/hexagons/
 mod tests {
     use crate::hex::cardinal::Cardinal;
 
-    use crate::hex::coord::axial::AxialVector;
+    use crate::hex::coord::axial::vector::AxialVector;
     use quickcheck::quickcheck;
     use rstest::rstest;
 

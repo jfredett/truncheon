@@ -1,7 +1,7 @@
 #[cfg(test)]
 use derive_quickcheck_arbitrary::Arbitrary;
 
-use crate::hex::coord::axial::vector::AxialVector;
+use crate::hex::coord::axial;
 
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -15,22 +15,22 @@ pub enum Cardinal {
     SW
 }
 
-const S : Cardinal = Cardinal::S;
-const SE : Cardinal = Cardinal::SE;
-const SW : Cardinal = Cardinal::SW;
-const N : Cardinal = Cardinal::N;
-const NE : Cardinal = Cardinal::NE;
-const NW : Cardinal = Cardinal::NW;
+pub const S : Cardinal = Cardinal::S;
+pub const SE : Cardinal = Cardinal::SE;
+pub const SW : Cardinal = Cardinal::SW;
+pub const N : Cardinal = Cardinal::N;
+pub const NE : Cardinal = Cardinal::NE;
+pub const NW : Cardinal = Cardinal::NW;
 
-impl From<Cardinal> for AxialVector {
+impl From<Cardinal> for axial::Vector {
     fn from(value: Cardinal) -> Self {
         match value {
-            Cardinal::N => { AxialVector::new(0,-1) },
-            Cardinal::NE => { AxialVector::new(1,-1) },
-            Cardinal::NW => { AxialVector::new(-1,0) },
-            Cardinal::S => { AxialVector::new(0,1) },
-            Cardinal::SE => { AxialVector::new(1,0) },
-            Cardinal::SW => { AxialVector::new(-1,1) }
+            Cardinal::N => { axial::Vector::new(0,-1) },
+            Cardinal::NE => { axial::Vector::new(1,-1) },
+            Cardinal::NW => { axial::Vector::new(-1,0) },
+            Cardinal::S => { axial::Vector::new(0,1) },
+            Cardinal::SE => { axial::Vector::new(1,0) },
+            Cardinal::SW => { axial::Vector::new(-1,1) }
         }
     }
 }
@@ -56,5 +56,15 @@ impl Cardinal {
             Cardinal::SE => { NE },
             Cardinal::NE => { N },
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[quickcheck]
+    fn rotation_inverse(h: Cardinal) -> bool {
+        h.clockwise().counterclockwise() == h && h.counterclockwise().clockwise() == h
     }
 }

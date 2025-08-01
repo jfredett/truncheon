@@ -1,11 +1,10 @@
-use std::fmt;
 use tracing_subscriber::{fmt::Subscriber, EnvFilter};
 
 use clap::{command, Parser};
 #[cfg(test)]
 pub use tracing_test;
 
-use truncheon::*;
+// use truncheon::*;
 
 pub mod ui;
 

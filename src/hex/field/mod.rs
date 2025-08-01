@@ -1,7 +1,7 @@
 
 use std::{collections::HashMap, marker::ConstParamTy, ops::{Index, IndexMut}};
 
-use crate::hex::coord::axial::point::Axial;
+use crate::hex::coord::axial;
 
 // NOTE: Should this be combined w/ above `Direction`/`FieldOrientation`? I want to support spiral
 // coords and such too at some point.
@@ -26,7 +26,7 @@ pub enum Direction {
 
 #[derive(Debug)]
 pub struct Hexfield<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECTION: Direction, T> where T : Clone {
-    contents: HashMap<Axial, T>
+    contents: HashMap<axial::Point, T>
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECTION: Direction, T>
@@ -38,7 +38,7 @@ where T : Clone {
         }
     }
 
-    pub fn insert(&mut self, key: Axial, value: T) {
+    pub fn insert(&mut self, key: axial::Point, value: T) {
         self.contents.insert(key, value);
     }
 }
@@ -47,7 +47,7 @@ impl<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECT
 for Hexfield<WIDTH, HEIGHT, ORIGIN, DIRECTION, T>
 where
     T : Clone,
-    Idx : Into<Axial>
+    Idx : Into<axial::Point>
 {
     fn index_mut(&mut self, index: Idx) -> &mut Self::Output {
         // FIXME: this is probably wrong.
@@ -59,7 +59,7 @@ impl<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECT
 for Hexfield<WIDTH, HEIGHT, ORIGIN, DIRECTION, T>
 where
     T : Clone,
-    Idx : Into<Axial>
+    Idx : Into<axial::Point>
 {
     type Output = T;
 
@@ -78,8 +78,8 @@ mod test {
     #[rstest]
     fn insert_and_retrieve() {
         let mut field : Hexfield<10, 10, { Origin::TopLeft }, { Direction::LR_TB }, isize> = Hexfield::new();
-        let coord = Axial::new(0,0);
-        let coord2 = Axial::new(0,1);
+        let coord = axial::Point::new(0,0);
+        let coord2 = axial::Point::new(0,1);
 
         field.insert(coord, 1);
         field.insert(coord2, 2);

@@ -35,54 +35,6 @@ https://www.redblobgames.com/grids/hexagons/
 // On the `world` struct, there are some set of `cursor`s, which represent players, parties,
 // enemies, or other mobile items.
 
-#[cfg(test)]
-mod tests {
-    use crate::hex::cardinal::Cardinal;
-
-    use crate::hex::coord::axial::vector::AxialVector;
-    use quickcheck::quickcheck;
-    use rstest::rstest;
-
-    #[quickcheck]
-    fn rotation_inverse(h: Cardinal) -> bool {
-        h.clockwise().counterclockwise() == h && h.counterclockwise().clockwise() == h
-    }
-
-    mod vector_math {
-
-        use super::*;
-
-        #[rstest]
-        fn vector_subtraction() {
-            let v = AxialVector::new(0,1);
-            let u = AxialVector::new(1,0);
-            let xp = AxialVector::new(1,-1);
-
-            assert_eq!(u - v, xp);
-        }
-
-        #[rstest]
-        fn vector_addition() {
-            let v = AxialVector::new(0,1);
-            let u = AxialVector::new(1,0);
-            let xp = AxialVector::new(1,1);
-
-            assert_eq!(u + v, xp);
-        }
-
-    }
-
-    #[rstest]
-    fn hex_movement_to_axial_vector() {
-        assert_eq!(AxialVector::from(Cardinal::N), AxialVector::new(0, -1));
-        assert_eq!(AxialVector::from(Cardinal::NE), AxialVector::new(1, -1));
-        assert_eq!(AxialVector::from(Cardinal::NW), AxialVector::new(-1, 0));
-        assert_eq!(AxialVector::from(Cardinal::S), AxialVector::new(0, 1));
-        assert_eq!(AxialVector::from(Cardinal::SE), AxialVector::new(1, 0));
-        assert_eq!(AxialVector::from(Cardinal::SW), AxialVector::new(-1, 1));
-    }
-}
-
 /*
 
 The goal of this thing is to reduce as much friction in the crawling process as possible.

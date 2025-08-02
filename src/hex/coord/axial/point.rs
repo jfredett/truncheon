@@ -88,7 +88,7 @@ impl Sub<axial::Point> for axial::Point {
 #[derive(Debug, PartialEq, Eq)]
 pub struct ParsePointError;
 
-impl From<std::num::ParseIntError> for ParsePointError { fn from(value: std::num::ParseIntError) -> Self { ParsePointError } }
+impl From<std::num::ParseIntError> for ParsePointError { fn from(_value: std::num::ParseIntError) -> Self { ParsePointError } }
 
 impl FromStr for Point {
     type Err = ParsePointError;

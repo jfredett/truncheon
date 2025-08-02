@@ -1,4 +1,4 @@
-use std::{ops::{Add, AddAssign, Mul, Sub, SubAssign}, str::FromStr};
+use std::{ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign}, str::FromStr};
 
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Default)]
@@ -22,7 +22,7 @@ impl Sub<Vector> for Vector {
     type Output = Vector;
 
     fn sub(self, rhs: Vector) -> Self::Output {
-        self + (-1 * rhs)
+        self + -rhs
     }
 }
 
@@ -74,6 +74,12 @@ impl SubAssign<Vector> for Vector {
     }
 }
 
+impl Neg for Vector {
+    type Output = Vector;
+
+    fn neg(self) -> Self::Output { -1 * self }
+}
+
 impl std::fmt::Display for Vector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "<{:?},{:?}>", self.u, self.v)
@@ -88,7 +94,7 @@ impl std::fmt::Debug for Vector {
 #[derive(Debug, PartialEq, Eq)]
 pub struct ParseVectorError;
 
-impl From<std::num::ParseIntError> for ParseVectorError { fn from(value: std::num::ParseIntError) -> Self { ParseVectorError } }
+impl From<std::num::ParseIntError> for ParseVectorError { fn from(_value: std::num::ParseIntError) -> Self { ParseVectorError } }
 
 impl FromStr for Vector {
     type Err = ParseVectorError;
@@ -154,13 +160,14 @@ mod test {
     }
 
     #[rstest]
-    fn hex_movement_to_axial_vector() {
-        assert_eq!(Vector::from(N), Vector::new(0, -1));
-        assert_eq!(Vector::from(NE), Vector::new(1, -1));
-        assert_eq!(Vector::from(NW), Vector::new(-1, 0));
-        assert_eq!(Vector::from(S), Vector::new(0, 1));
-        assert_eq!(Vector::from(SE), Vector::new(1, 0));
-        assert_eq!(Vector::from(SW), Vector::new(-1, 1));
+    #[case(N, "<0,-1>")]
+    #[case(NE, "<1,-1>")]
+    #[case(NW, "<-1,0>")]
+    #[case(S, "<0,1>")]
+    #[case(SE, "<1,0>")]
+    #[case(SW, "<-1,1>")]
+    fn hex_movement_to_axial_vector(#[case] direction: Cardinal, #[case] expected: Vector) {
+        assert_eq!(Vector::from(direction), expected);
     }
 
     mod vector_math {
@@ -177,9 +184,17 @@ mod test {
 
         #[rstest]
         fn vector_addition() {
-            let v = Vector::new(0,1);
+            let mut v = Vector::new(0,1);
             let u = Vector::new(1,0);
             let xp = Vector::new(1,1);
+
+            assert_eq!(u + v, xp);
+
+            v += u;
+
+            assert_eq!(v, xp);
+
+            v -= u;
 
             assert_eq!(u + v, xp);
         }

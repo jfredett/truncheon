@@ -1,39 +1,49 @@
+/*
+* I don't love this.
+*
+* I think the model I want is something like:
+*
+* Cursor -> A location on a map
+*   Associated to one Map
+*   Has name
+*   can have vectors added, reset to point, etc.
+*   has a log of all visited hexes
+* Field<Hex> -> an independent axial coordinate system
+*   Hashmap for now, eventually some flat indexing scheme would be nice.
+* Hex -> An entry in a Map, this is abstract, and ideally two Maps should be "join"-able, i.e.:
+*   Map<T>.join(Map<U>) -> Map<(T, U)>
+*
+* Cursors will have a small language a la `spell` from Hazel. The UI will hold a Field, which
+* can contain references to other Fields in it, which the UI can then load. This might be bound up
+* in a 'World' struct or something like.
+*
+* Fields are unbound, but centered on [0,0] by default. Display can have an 'offset' vector to
+* control what it can see, and then I can calculate distance OTF. This drops the
+* indexing/width-height reqs in the current model.
+*
+* This makes index-based storage harder, but I think the solution to that will be a spiral packing
+* system. I can also use a straightforward conversion like `2^q * 3^r` or whatever to get a simple
+* numeric value for each hex, even if it's sparse.
+*
+* 
+*
+*/
 
-use std::{collections::HashMap, marker::ConstParamTy, ops::{Index, IndexMut}};
+
+
+use std::{collections::HashMap, ops::{Index, IndexMut}};
 
 use crate::hex::coord::axial;
 
-// NOTE: Should this be combined w/ above `Direction`/`FieldOrientation`? I want to support spiral
-// coords and such too at some point.
-#[derive(ConstParamTy, PartialEq, Eq)]
-pub enum Origin {
-    TopLeft,
-    TopRight,
-    BottomLeft,
-    BottomRight,
-}
-
-// TODO: Maybe this should be "FieldOrientation" or something like? Would be cool to support spiral
-// coords, not convinced this is the right type.
-#[derive(ConstParamTy, PartialEq, Eq)]
-#[allow(non_camel_case_types)]
-pub enum Direction {
-    LR_TB,
-    RL_TB,
-    LR_BT,
-    RL_BT
-}
 
 #[derive(Debug)]
-pub struct Hexfield<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECTION: Direction, T> where T : Clone {
+pub struct Field<T> where T : Clone {
     contents: HashMap<axial::Point, T>
 }
 
-impl<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECTION: Direction, T>
-    Hexfield<WIDTH, HEIGHT, ORIGIN, DIRECTION, T>
-where T : Clone {
+impl<T> Field<T> where T : Clone {
     pub fn new() -> Self {
-        Hexfield {
+        Field {
             contents: HashMap::new()
         }
     }
@@ -43,24 +53,14 @@ where T : Clone {
     }
 }
 
-impl<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECTION: Direction, T, Idx> IndexMut<Idx>
-for Hexfield<WIDTH, HEIGHT, ORIGIN, DIRECTION, T>
-where
-    T : Clone,
-    Idx : Into<axial::Point>
-{
+impl<T, Idx> IndexMut<Idx> for Field<T> where T : Clone, Idx : Into<axial::Point> {
     fn index_mut(&mut self, index: Idx) -> &mut Self::Output {
         // FIXME: this is probably wrong.
         self.contents.get_mut(&index.into()).unwrap()
     }
 }
 
-impl<const WIDTH: usize, const HEIGHT: usize, const ORIGIN: Origin, const DIRECTION: Direction, T, Idx> Index<Idx>
-for Hexfield<WIDTH, HEIGHT, ORIGIN, DIRECTION, T>
-where
-    T : Clone,
-    Idx : Into<axial::Point>
-{
+impl<T, Idx> Index<Idx> for Field<T> where T : Clone, Idx : Into<axial::Point> {
     type Output = T;
 
     fn index(&self, index: Idx) -> &Self::Output {
@@ -77,7 +77,7 @@ mod test {
 
     #[rstest]
     fn insert_and_retrieve() {
-        let mut field : Hexfield<10, 10, { Origin::TopLeft }, { Direction::LR_TB }, isize> = Hexfield::new();
+        let mut field : Field<isize> = Field::new();
         let coord = axial::Point::new(0,0);
         let coord2 = axial::Point::new(0,1);
 

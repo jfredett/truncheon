@@ -1,3 +1,4 @@
 /target
 .bacon-locations
 truncheon.log
+.lcov

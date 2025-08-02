@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, SubAssign};
+use std::{ops::{Add, AddAssign, Sub, SubAssign}, str::FromStr};
 
 use crate::hex::coord::{axial, cubic::CubicCoord};
 
@@ -17,6 +17,10 @@ impl Point {
     pub fn q(&self) -> isize { self.q }
     pub fn r(&self) -> isize { self.r }
     pub fn s(&self) -> isize { -self.q - self.r }
+
+    pub fn neighbors(&self, range: isize) -> Vec<Point> {
+        todo!()
+    }
 }
 
 impl From<Point> for CubicCoord {
@@ -31,9 +35,15 @@ impl From<&Point> for Point {
     }
 }
 
+impl std::fmt::Display for Point {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{:?},{:?}]", self.q, self.r)
+    }
+}
+
 impl std::fmt::Debug for Point {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{:?}, {:?}]", self.q, self.r)
+        write!(f, "[{:?},{:?}]", self.q, self.r)
     }
 }
 
@@ -63,11 +73,66 @@ impl SubAssign<axial::Vector> for Point {
     }
 }
 
+impl Sub<axial::Point> for axial::Point {
+    type Output = axial::Vector;
+
+    fn sub(self, rhs: axial::Point) -> Self::Output {
+        axial::Vector::new(
+            self.q() - rhs.q(),
+            self.r() - rhs.r()
+        )
+    }
+
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParsePointError;
+
+impl From<std::num::ParseIntError> for ParsePointError { fn from(value: std::num::ParseIntError) -> Self { ParsePointError } }
+
+impl FromStr for Point {
+    type Err = ParsePointError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (q, r) = s
+            .strip_prefix('[')
+            .and_then(|s| s.strip_suffix(']'))
+            .and_then(|s| s.split_once(','))
+            .ok_or(ParsePointError)?;
+
+        Ok(Point::new(isize::from_str(q)?, isize::from_str(r)?))
+    }
+}
+
 
 
 #[cfg(test)]
 mod test {
-    // use super::*;
+    use rstest::rstest;
 
+    use super::*;
 
+    #[quickcheck]
+    fn display_parse_roundtrip(p: Point) -> bool {
+        let p_s = format!("{}", p);
+        let p_parsed = Point::from_str(&p_s).unwrap();
+
+        p == p_parsed
+    }
+    #[quickcheck]
+    fn debug_parse_roundtrip(p: Point) -> bool {
+        let p_s = format!("{:?}", p);
+        let p_parsed = Point::from_str(&p_s).unwrap();
+
+        p == p_parsed
+    }
+
+    #[rstest]
+    #[case("[0,0]", axial::Vector::new(1,1), Point::new(1,1))]
+    #[case(Point::new(1,0), axial::Vector::new(1,1), Point::new(2,1))]
+    #[case(Point::new(0,0), axial::Vector::new(1,-1), Point::new(1,-1))]
+    #[case(Point::new(3,3), axial::Vector::new(-2,-2), Point::new(1,1))]
+    fn add_vector_to_point(#[case] p: Point, #[case] v: axial::Vector, #[case] x: Point) {
+        assert_eq!(p + v, x);
+    }
 }

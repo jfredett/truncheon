@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
+use std::{ops::{Add, AddAssign, Mul, Sub, SubAssign}, str::FromStr};
 
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Default)]
@@ -74,9 +74,33 @@ impl SubAssign<Vector> for Vector {
     }
 }
 
+impl std::fmt::Display for Vector {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<{:?},{:?}>", self.u, self.v)
+    }
+}
 impl std::fmt::Debug for Vector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<{:?}, {:?}>", self.u, self.v)
+        write!(f, "<{:?},{:?}>", self.u, self.v)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParseVectorError;
+
+impl From<std::num::ParseIntError> for ParseVectorError { fn from(value: std::num::ParseIntError) -> Self { ParseVectorError } }
+
+impl FromStr for Vector {
+    type Err = ParseVectorError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (u, v) = s
+            .strip_prefix('<')
+            .and_then(|s| s.strip_suffix('>'))
+            .and_then(|s| s.split_once(','))
+            .ok_or(ParseVectorError)?;
+
+        Ok(Vector::new(isize::from_str(u)?, isize::from_str(v)?))
     }
 }
 
@@ -88,13 +112,45 @@ mod test {
 
     use super::*;
 
+    #[quickcheck]
+    fn display_parse_roundtrip(p: Vector) -> bool {
+        let p_s = format!("{}", p);
+        let p_parsed = Vector::from_str(&p_s).unwrap();
+
+        p == p_parsed
+    }
+    #[quickcheck]
+    fn debug_parse_roundtrip(p: Vector) -> bool {
+        let p_s = format!("{:?}", p);
+        let p_parsed = Vector::from_str(&p_s).unwrap();
+
+        p == p_parsed
+    }
+
     mod vector_laws {
-        // use super::*;
+        use super::*;
 
         // FIXME: Overflow issues
-        // #[quickcheck] fn add_commutative(a: Vector, b: Vector) -> bool { a + b == b + a }
-        // #[quickcheck] fn mul_commutative(a: Vector, s: isize) -> bool { a * s == s * a }
-        // #[quickcheck] fn sub_anticommutative(a: Vector, b: Vector) -> bool { a - b == -1 * (b - a) }
+        #[quickcheck] fn add_commutative(a_q: i32, a_r: i32, b_q: i32, b_r: i32) -> bool {
+            let a = Vector::new(a_q as isize, a_r as isize);
+            let b = Vector::new(b_q as isize, b_r as isize);
+
+            a + b == b + a
+        }
+
+        #[quickcheck] fn mul_commutative(a_q: i8, a_r: i8, s_in: i16) -> bool {
+            let a = Vector::new(a_q as isize, a_r as isize);
+            let s = s_in as isize;
+
+            a * s == s * a
+        }
+
+        #[quickcheck] fn sub_anticommutative(a_q: i32, a_r: i32, b_q: i32, b_r: i32) -> bool {
+            let a = Vector::new(a_q as isize, a_r as isize);
+            let b = Vector::new(b_q as isize, b_r as isize);
+
+            a - b == -1 * (b - a)
+        }
     }
 
     #[rstest]

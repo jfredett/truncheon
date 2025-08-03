@@ -73,6 +73,17 @@ impl SubAssign<axial::Vector> for Point {
     }
 }
 
+impl Sub<axial::Vector> for axial::Point {
+    type Output = axial::Point;
+
+    fn sub(self, rhs: axial::Vector) -> Self::Output {
+        axial::Point::new(
+            self.q() - rhs.u(),
+            self.r() - rhs.v()
+        )
+    }
+}
+
 impl Sub<axial::Point> for axial::Point {
     type Output = axial::Vector;
 
@@ -82,7 +93,6 @@ impl Sub<axial::Point> for axial::Point {
             self.r() - rhs.r()
         )
     }
-
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -128,11 +138,20 @@ mod test {
     }
 
     #[rstest]
-    #[case("[0,0]", axial::Vector::new(1,1), Point::new(1,1))]
-    #[case(Point::new(1,0), axial::Vector::new(1,1), Point::new(2,1))]
-    #[case(Point::new(0,0), axial::Vector::new(1,-1), Point::new(1,-1))]
-    #[case(Point::new(3,3), axial::Vector::new(-2,-2), Point::new(1,1))]
+    #[case("[0,0]", "<1,1>", "[1,1]")]
+    #[case("[1,0]", "<1,1>", "[2,1]")]
+    #[case("[1,0]", "<-1,1>", "[0,1]")]
+    #[case("[-1,-1]", "<1,1>", "[0,0]")]
     fn add_vector_to_point(#[case] p: Point, #[case] v: axial::Vector, #[case] x: Point) {
         assert_eq!(p + v, x);
+    }
+
+    #[rstest]
+    #[case("[0,0]", "<1,1>", "[-1,-1]")]
+    #[case("[1,0]", "<1,1>", "[0,-1]")]
+    #[case("[1,0]", "<-1,1>", "[2,-1]")]
+    #[case("[-1,-1]", "<1,1>", "[-2,-2]")]
+    fn sub_vector_to_point(#[case] p: Point, #[case] v: axial::Vector, #[case] x: Point) {
+        assert_eq!(p - v, x);
     }
 }

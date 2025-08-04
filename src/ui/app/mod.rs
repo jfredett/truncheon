@@ -6,6 +6,8 @@ use tui_logger::{LevelFilter, TuiLoggerLevelOutput, TuiLoggerSmartWidget, TuiWid
 
 use lazy_static::lazy_static;
 
+use crate::ui::widgets::placeholder::Placeholder;
+
 enum Mode {
     Insert,
     Command
@@ -118,7 +120,29 @@ impl UI {
     }
 
     pub fn render(&self, frame: &mut Frame<'_>) {
-        todo!();
+        let chunks = PRIMARY_LAYOUT.split(frame.area());
+        let upper_section = chunks[0];
+        let log_section = chunks[1];
+        let io_section = chunks[2];
+
+        let chunks = UPPER_LAYOUT.split(upper_section);
+        let board_section = chunks[0];
+        let tapereader_section = chunks[1];
+
+        let chunks = BOARD_SECTION_LAYOUT.split(board_section);
+        let _board_header = chunks[0];
+        let board_field = chunks[1];
+        let board_footer = chunks[2];
+
+        let chunks = IO_SECTION_LAYOUT.split(io_section);
+        let output_section = chunks[0];
+        let input_section = chunks[1];
+
+        let tlw = self.tui_logger_widget();
+
+        Widget::render(tlw, log_section, frame.buffer_mut());
+        Widget::render(&Placeholder::for_section(board_field), board_field, frame.buffer_mut());
+        Widget::render(&Placeholder::for_section(board_footer).text("TEST"), board_footer, frame.buffer_mut());
     }
 }
 

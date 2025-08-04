@@ -36,7 +36,7 @@ use std::{collections::HashMap, ops::{Index, IndexMut}};
 use crate::hex::coord::axial;
 
 
-#[derive(Debug)]
+#[derive(Debug, Default, Clone)]
 pub struct Field<T> where T : Clone {
     contents: HashMap<axial::Point, T>
 }

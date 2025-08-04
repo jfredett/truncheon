@@ -1,0 +1,45 @@
+---
+source: src/ui/app/mod.rs
+assertion_line: 199
+expression: t.backend().buffer().clone()
+---
+Buffer {
+    area: Rect { x: 0, y: 0, width: 64, height: 32 },
+    content: [
+        "                                                                ",
+        "                                                                ",
+        "                                                                ",
+        "┌─────────────────┐                                             ",
+        "│   Placeholder   │                                             ",
+        "│   Placeholder   │                                             ",
+        "│   Placeholder   │                                             ",
+        "│   Placeholder   │                                             ",
+        "│   Placeholder   │                                             ",
+        "│   Placeholder   │                                             ",
+        "│   Placeholder   │                                             ",
+        "│   Placeholder   │                                             ",
+        "└─────────────────┘                                             ",
+        "┌─────────────────┐                                             ",
+        "│      TEST       │                                             ",
+        "└─────────────────┘                                             ",
+        "┌Tui Ta┐┌Tui Log [log=0.0/s]───────────────────────────────────┐",
+        "│      ││                                                      │",
+        "│      ││                                                      │",
+        "│      ││                                                      │",
+        "│      ││                                                      │",
+        "│      ││                                                      │",
+        "│      ││                                                      │",
+        "│      ││                                                      │",
+        "│      ││                                                      │",
+        "└──────┘└──────────────────────────────────────────────────────┘",
+        "                                                                ",
+        "                                                                ",
+        "                                                                ",
+        "                                                                ",
+        "                                                                ",
+        "                                                                ",
+    ],
+    styles: [
+        x: 0, y: 0, fg: Reset, bg: Reset, underline: Reset, modifier: NONE,
+    ]
+}

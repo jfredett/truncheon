@@ -7,7 +7,7 @@ use tui_logger::{LevelFilter, TuiLoggerLevelOutput, TuiLoggerSmartWidget, TuiWid
 
 use lazy_static::lazy_static;
 
-use crate::ui::widgets::{canvas_placeholder::CanvasPlaceholder, placeholder::Placeholder};
+use crate::ui::widgets::{canvas_placeholder::CanvasPlaceholder, hexmap::Hexmap, placeholder::Placeholder};
 
 enum Mode {
     Insert,
@@ -149,8 +149,8 @@ impl UI {
         // to show expanded info.
         Widget::render(&Placeholder::for_section(trail_slice).text("TRAIL"), trail_slice, frame.buffer_mut());
         // A canvas, maybe extend placeholder first to do a dummy canvas.
-        Widget::render(&CanvasPlaceholder::default(), player_map_slice, frame.buffer_mut());
-        Widget::render(&Placeholder::for_section(gm_map_slice).text("GM MAP"), gm_map_slice, frame.buffer_mut());
+        StatefulWidget::render(Hexmap::default(), player_map_slice, frame.buffer_mut(), &mut Field::<isize>::new());
+        StatefulWidget::render(Hexmap::default(), gm_map_slice, frame.buffer_mut(), &mut Field::<isize>::new());
 
         Widget::render(&Placeholder::for_section(output_section).text("OUTPUT"), output_section, frame.buffer_mut());
         Widget::render(&Placeholder::for_section(input_section).text("> INPUT"), input_section, frame.buffer_mut());

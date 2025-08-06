@@ -64,6 +64,11 @@ impl<T> Field<T> where T: Clone + Default {
     }
 }
 
+// trait Fieldlike<T> {
+//     fn lookup(&self, key: axial::Point) -> Arc<Mutex<T>>;
+//     fn insert(&self, key: axial::Point, value: T);
+// }
+
 
 
 #[cfg(test)]

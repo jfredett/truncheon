@@ -31,42 +31,39 @@
 
 
 
-use std::{collections::HashMap, ops::{Index, IndexMut}};
+use std::{collections::HashMap, ops::{Index, IndexMut}, sync::{Arc, Mutex, RwLock}};
 
 use crate::hex::coord::axial;
 
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct Field<T> where T : Clone {
-    contents: HashMap<axial::Point, T>
+    // Lock the table to add new hexes, each hex is an arc-mutex. This means each T has it's own
+    // lock. A hexmap can divide state across multiple fields for additional granularity.
+    contents: RwLock<HashMap<axial::Point, Arc<Mutex<T>>>>
 }
 
 impl<T> Field<T> where T : Clone {
     pub fn new() -> Self {
         Field {
-            contents: HashMap::new()
+            contents: HashMap::new().into()
         }
     }
 
-    pub fn insert(&mut self, key: axial::Point, value: T) {
-        self.contents.insert(key, value);
+    pub fn insert(&self, key: axial::Point, value: T) {
+        let mut contents = self.contents.write().unwrap();
+        contents.insert(key, Arc::new(Mutex::new(value)));
+    }
+
+}
+
+impl<T> Field<T> where T: Clone + Default {
+    pub fn lookup(&self, key: axial::Point) -> Arc<Mutex<T>>{
+        let mut contents = self.contents.write().unwrap();
+        contents.entry(key).or_default().clone()
     }
 }
 
-impl<T, Idx> IndexMut<Idx> for Field<T> where T : Clone, Idx : Into<axial::Point> {
-    fn index_mut(&mut self, index: Idx) -> &mut Self::Output {
-        // FIXME: this is probably wrong.
-        self.contents.get_mut(&index.into()).unwrap()
-    }
-}
-
-impl<T, Idx> Index<Idx> for Field<T> where T : Clone, Idx : Into<axial::Point> {
-    type Output = T;
-
-    fn index(&self, index: Idx) -> &Self::Output {
-        &self.contents[&index.into()]
-    }
-}
 
 
 #[cfg(test)]
@@ -80,12 +77,15 @@ mod test {
         let mut field : Field<isize> = Field::new();
         let coord = axial::Point::new(0,0);
         let coord2 = axial::Point::new(0,1);
+        let coord3 = axial::Point::new(1,1);
 
         field.insert(coord, 1);
         field.insert(coord2, 2);
 
-        assert!(field[&coord] == 1);
-        assert!(field[&coord2] != 1);
+        assert_eq!(field.lookup(coord), 1);
+        assert_eq!(field.lookup(coord2), 2);
+
+        assert_eq!(field.lookup(coord3), isize::default());
     }
 
 }

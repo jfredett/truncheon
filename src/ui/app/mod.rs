@@ -1,12 +1,13 @@
 use ratatui::{crossterm::event::{Event, KeyCode}, layout::{Constraint, Layout}, style::{Color, Style}, widgets::{StatefulWidget, Widget}, Frame};
+use truncheon::hex::{coord::axial, field::Field};
 
-use std::{collections::HashMap, fmt::Debug, sync::Mutex};
+use std::{collections::HashMap, fmt::Debug, str::FromStr, sync::Mutex};
 
 use tui_logger::{LevelFilter, TuiLoggerLevelOutput, TuiLoggerSmartWidget, TuiWidgetState};
 
 use lazy_static::lazy_static;
 
-use crate::ui::widgets::placeholder::Placeholder;
+use crate::ui::widgets::{canvas_placeholder::CanvasPlaceholder, placeholder::Placeholder};
 
 enum Mode {
     Insert,
@@ -28,6 +29,7 @@ impl Debug for UI {
             .finish()
     }
 }
+
 
 // Workflow:
 // 0. handle_events
@@ -126,13 +128,13 @@ impl UI {
         let io_section = chunks[2];
 
         let chunks = UPPER_LAYOUT.split(upper_section);
-        let board_section = chunks[0];
-        let tapereader_section = chunks[1];
+        // Used to show the travel 'trail', both the intended and actual
+        let trail_slice = chunks[0];
+        // Used to show the intended location of the players
+        let player_map_slice = chunks[1];
+        // Used to show the actual location of the players
+        let gm_map_slice = chunks[2];
 
-        let chunks = BOARD_SECTION_LAYOUT.split(board_section);
-        let _board_header = chunks[0];
-        let board_field = chunks[1];
-        let board_footer = chunks[2];
 
         let chunks = IO_SECTION_LAYOUT.split(io_section);
         let output_section = chunks[0];
@@ -141,8 +143,17 @@ impl UI {
         let tlw = self.tui_logger_widget();
 
         Widget::render(tlw, log_section, frame.buffer_mut());
-        Widget::render(&Placeholder::for_section(board_field), board_field, frame.buffer_mut());
-        Widget::render(&Placeholder::for_section(board_footer).text("TEST"), board_footer, frame.buffer_mut());
+
+
+        // Should show a log of intended direction, actual, etc. Maybe add a logline beneath maps
+        // to show expanded info.
+        Widget::render(&Placeholder::for_section(trail_slice).text("TRAIL"), trail_slice, frame.buffer_mut());
+        // A canvas, maybe extend placeholder first to do a dummy canvas.
+        Widget::render(&CanvasPlaceholder::default(), player_map_slice, frame.buffer_mut());
+        Widget::render(&Placeholder::for_section(gm_map_slice).text("GM MAP"), gm_map_slice, frame.buffer_mut());
+
+        Widget::render(&Placeholder::for_section(output_section).text("OUTPUT"), output_section, frame.buffer_mut());
+        Widget::render(&Placeholder::for_section(input_section).text("> INPUT"), input_section, frame.buffer_mut());
     }
 }
 
@@ -158,24 +169,28 @@ lazy_static! {
     static ref UPPER_LAYOUT : Layout = Layout::default()
         .direction(ratatui::layout::Direction::Horizontal)
         .constraints([
-            Constraint::Percentage(30),
-            Constraint::Percentage(70),
+            Constraint::Percentage(10),
+            Constraint::Percentage(45),
+            Constraint::Percentage(45),
         ].as_ref());
-
-    static ref BOARD_SECTION_LAYOUT : Layout = Layout::default()
-        .direction(ratatui::layout::Direction::Vertical)
-        .constraints([
-            Constraint::Percentage(20),
-            Constraint::Percentage(60),
-            Constraint::Percentage(20),
-        ].as_ref());
-
     static ref IO_SECTION_LAYOUT : Layout = Layout::default()
         .direction(ratatui::layout::Direction::Vertical)
         .constraints([
             Constraint::Min(1),
             Constraint::Length(1)
         ].as_ref());
+
+    static ref TEST_FIELD : Field<isize> = {
+        let f = Field::new();
+        f.insert(axial::Point::from_str("[0,0]").unwrap(), 0);
+        f.insert(axial::Point::from_str("[0,1]").unwrap(), 1);
+        f.insert(axial::Point::from_str("[1,0]").unwrap(), 2);
+        f.insert(axial::Point::from_str("[1,1]").unwrap(), 3);
+        f.insert(axial::Point::from_str("[0,-1]").unwrap(), -1);
+        f.insert(axial::Point::from_str("[-1,0]").unwrap(), -2);
+        f.insert(axial::Point::from_str("[-1,-1]").unwrap(), -3);
+        f
+    };
 }
 
 

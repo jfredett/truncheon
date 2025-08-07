@@ -14,6 +14,32 @@ impl Point {
         Point { q, r }
     }
 
+    pub fn origin() -> Self {
+        Self::new(0,0)
+    }
+
+    const RT_3 : f64 = 1.7640508076; // sqrt(3);
+
+
+    // centerpoint
+    pub fn to_pointytop_pixel(&self) -> (f64, f64) {
+        let q : f64 = self.q as f64;
+        let half_r : f64 = self.r as f64 / 2.0;
+        let x = Self::RT_3 * (q + half_r);
+        let y = Self::RT_3 * half_r;
+
+        (x,y)
+    }
+
+    pub fn to_flattop_pixel(&self) -> (f64, f64) {
+        let half_q : f64 = self.q as f64 / 2.0;
+        let r : f64 = self.r as f64 ;
+        let x = Self::RT_3 * half_q;
+        let y = Self::RT_3 * (r + half_q);
+
+        (x,y)
+    }
+
     pub fn q(&self) -> isize { self.q }
     pub fn r(&self) -> isize { self.r }
     pub fn s(&self) -> isize { -self.q - self.r }

@@ -53,7 +53,6 @@ impl Widget for &CanvasPlaceholder {
 mod tests {
     use super::*;
 
-
     mod rendering {
         use super::*;
 

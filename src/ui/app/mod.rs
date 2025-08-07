@@ -151,7 +151,6 @@ impl UI {
         // A canvas, maybe extend placeholder first to do a dummy canvas.
         StatefulWidget::render(Hexmap::default(), player_map_slice, frame.buffer_mut(), &mut Field::<isize>::new());
         StatefulWidget::render(Hexmap::default(), gm_map_slice, frame.buffer_mut(), &mut Field::<isize>::new());
-
         Widget::render(&Placeholder::for_section(output_section).text("OUTPUT"), output_section, frame.buffer_mut());
         Widget::render(&Placeholder::for_section(input_section).text("> INPUT"), input_section, frame.buffer_mut());
     }

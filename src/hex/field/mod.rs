@@ -87,10 +87,17 @@ mod test {
         field.insert(coord, 1);
         field.insert(coord2, 2);
 
-        assert_eq!(field.lookup(coord), 1);
-        assert_eq!(field.lookup(coord2), 2);
+        let lookup = field.lookup(coord);
+        let guard = lookup.lock().unwrap();
+        assert_eq!(*guard, 1);
 
-        assert_eq!(field.lookup(coord3), isize::default());
+        let lookup = field.lookup(coord2);
+        let guard = lookup.lock().unwrap();
+        assert_eq!(*guard, 2);
+
+        let lookup = field.lookup(coord3);
+        let guard = lookup.lock().unwrap();
+        assert_eq!(*guard, isize::default());
     }
 
 }

@@ -102,7 +102,7 @@ impl UI {
     }
 
     pub async fn update(&mut self) {
-        todo!();
+        // todo!();
     }
 
     fn tui_logger_widget(&self) -> TuiLoggerSmartWidget {

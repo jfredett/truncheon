@@ -1,6 +1,6 @@
 use std::{ops::{Add, AddAssign, Sub, SubAssign}, str::FromStr};
 
-use crate::hex::coord::{axial, cubic::CubicCoord};
+use crate::hex::coord::{axial, cubic::CubicCoord, pixel};
 
 #[derive(PartialEq, Clone, Copy, Hash, Eq)]
 #[cfg_attr(test, derive(derive_quickcheck_arbitrary::Arbitrary))]
@@ -18,26 +18,29 @@ impl Point {
         Self::new(0,0)
     }
 
-    const RT_3 : f64 = 1.7640508076; // sqrt(3);
+    pub const RT_3 : f64 = 1.7640508076; // sqrt(3);
 
 
     // centerpoint
-    pub fn to_pointytop_pixel(&self) -> (f64, f64) {
+    pub fn to_pointytop_pixel(&self) -> pixel::Point {
         let q : f64 = self.q as f64;
         let half_r : f64 = self.r as f64 / 2.0;
         let x = Self::RT_3 * (q + half_r);
-        let y = Self::RT_3 * half_r;
+        let y = 3.0 * half_r;
 
-        (x,y)
+        pixel::Point::new(x,y)
     }
 
-    pub fn to_flattop_pixel(&self) -> (f64, f64) {
+    // TODO: Cartesian Point/Vector?
+    // TODO: Matrix class for vectors (simplifies math)
+
+    pub fn to_flattop_pixel(&self) -> pixel::Point {
         let half_q : f64 = self.q as f64 / 2.0;
         let r : f64 = self.r as f64 ;
-        let x = Self::RT_3 * half_q;
+        let x = 3.0 * half_q;
         let y = Self::RT_3 * (r + half_q);
 
-        (x,y)
+        pixel::Point::new(x,y)
     }
 
     pub fn q(&self) -> isize { self.q }
@@ -61,9 +64,21 @@ impl From<&Point> for Point {
     }
 }
 
+impl From<&axial::Vector> for Point {
+    fn from(value: &axial::Vector) -> Self {
+        Point::origin() + *value
+    }
+}
+
+impl From<axial::Vector> for Point {
+    fn from(value: axial::Vector) -> Self {
+        Point::origin() + value
+    }
+}
+
 impl std::fmt::Display for Point {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{:?},{:?}]", self.q, self.r)
+        write!(f, "[{},{}]", self.q, self.r)
     }
 }
 

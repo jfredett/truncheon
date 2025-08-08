@@ -25,8 +25,6 @@
 * system. I can also use a straightforward conversion like `2^q * 3^r` or whatever to get a simple
 * numeric value for each hex, even if it's sparse.
 *
-* 
-*
 */
 
 

@@ -1,5 +1,6 @@
 use ratatui::{style::Color, widgets::{canvas::{Canvas, Context, Line, Rectangle}, StatefulWidget, Widget}};
-use truncheon::hex::{coord::axial, field::Field};
+use tracing::info;
+use truncheon::hex::{coord::{axial, pixel}, field::Field};
 
 #[derive(Debug, Clone)]
 pub struct Hexmap {
@@ -7,21 +8,80 @@ pub struct Hexmap {
     center: axial::Point
 }
 
+
 impl Hexmap {
-    pub fn draw(&self, ctx: &mut Context<'_>, state: &Field<isize>) {
+    pub fn draw(&self, aspect: f64, ctx: &mut Context<'_>, state: &Field<isize>) {
         // starting from current origin in the center, spiral outward and render each hex
         // incrementally.
         for ax in axial::spiral() {
-            let shifted_ax = ax + (self.center - axial::Point::origin());
+            info!("Drawing hex: {}", ax);
+            let r = 8.0;
+            let ax_vec = ax - axial::Point::origin();
+            // TODO: This needs to be a Pixel Point/Vector type.
+            let shifted_ax = (ax_vec + (self.center - axial::Point::origin()));
             // convert ax -> screenspace coords, [0,0] in the center of the canvas
-            let (p_x, p_y) = ax.to_flattop_pixel();
-            ctx.draw(&Line {
-                x1: p_x,
-                y1: p_y,
-                x2: 2.0 * p_x,
-                y2: 2.0 * p_y,
-                color: Color::Blue
-            });
+            let p_unscaled = shifted_ax.to_flattop_pixel();
+            let p = pixel::Point::new(
+                p_unscaled.x() * r,
+                p_unscaled.y() * r
+            );
+
+            // TEMP: draw a dot instead of a line
+            // draw six lines from -- relative to the center point at `p`, scaled to the size
+            //
+            // -r/2, h  <-> r/2, h
+            // r/2, h   <-> r,0
+            // r,0      <-> r/2, -h
+            // r/2, -h  <-> -r/2, -h
+            // -r/2, -h <-> -r, 0
+            // -r, 0    <-> -r/2, h
+            //
+            // where `r` is the radius of the hex
+            // h = r * sqrt(3)/2
+
+            let h = r * (3f64).sqrt() / 2.0;
+
+            let v1 = pixel::Vector::new(-r / 2.0 , h);
+            let v2 = pixel::Vector::new(r / 2.0  , h);
+            let v3 = pixel::Vector::new(r        , 0.0);
+            let v4 = pixel::Vector::new(r / 2.0  , -h);
+            let v5 = pixel::Vector::new(-r / 2.0 , -h);
+            let v6 = pixel::Vector::new(-r       , 0.0);
+
+            // ctx.draw(&pixel::Point::line(p, p)); // center dot
+            ctx.draw(&pixel::Point::line(p + v1, p + v2));
+            ctx.draw(&pixel::Point::line(p + v2, p + v3));
+            ctx.draw(&pixel::Point::line(p + v3, p + v4));
+            ctx.draw(&pixel::Point::line(p + v4, p + v5));
+            ctx.draw(&pixel::Point::line(p + v5, p + v6));
+            ctx.draw(&pixel::Point::line(p + v6, p + v1));
+
+
+            // let h = aspect * axial::Point::RT_3 / 2.0;
+
+            // let (x1, y1) = (p_x - (r / 2.0), p_y + h);
+            // let (x2, y2) = (p_x + (r / 2.0), p_y + h);
+            // info!("Drawing line of {}, from [{}, {}] to [{}, {}]", ax, x1, y1, x2, y2);
+            // ctx.draw(&Line {
+            //     x1, y1, x2, y2,
+            //     color: Color::Blue
+            // });
+
+            // let (x1, y1) = (p_x + (r / 2.0), p_y + h);
+            // let (x2, y2) = (p_x + r, p_y);
+            // info!("Drawing line of {}, from [{}, {}] to [{}, {}]", ax, x1, y1, x2, y2);
+            // ctx.draw(&Line {
+            //     x1, y1, x2, y2,
+            //     color: Color::Blue
+            // });
+
+            // let (x1, y1) = (p_x + r, p_y);
+            // let (x2, y2) = (p_x + (r / 2.0), p_y - h);
+            // info!("Drawing line of {}, from [{}, {}] to [{}, {}]", ax, x1, y1, x2, y2);
+            // ctx.draw(&Line {
+            //     x1, y1, x2, y2,
+            //     color: Color::Blue
+            // });
 
             // draw a hex of specific size
             // write shifted coords at bottom of hex
@@ -42,10 +102,11 @@ impl StatefulWidget for Hexmap {
 
 
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer, state: &mut Self::State) {
+        let aspect = area.width as f64 / area.height as f64;
         let widget = Canvas::default()
             .x_bounds([-100.0, 100.0])
             .y_bounds([-100.0, 100.0])
-            .paint(|ctx| self.draw(ctx, state));
+            .paint(|ctx| self.draw(aspect, ctx, state));
 
         Widget::render(&widget, area, buf);
     }

@@ -1,5 +1,7 @@
 use std::{ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign}, str::FromStr};
 
+use crate::hex::coord::{axial, pixel};
+
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Default)]
 #[cfg_attr(test, derive(derive_quickcheck_arbitrary::Arbitrary))]
@@ -13,9 +15,18 @@ impl Vector {
         Vector { u, v }
     }
 
-
     pub fn u(&self) -> isize { self.u }
     pub fn v(&self) -> isize { self.v }
+
+    pub fn to_flattop_pixel(&self) -> pixel::Point {
+        let p : axial::Point = self.into();
+        p.to_flattop_pixel()
+    }
+
+    pub fn to_pointytop_pixel(&self) -> pixel::Point {
+        let p : axial::Point = self.into();
+        p.to_pointytop_pixel()
+    }
 }
 
 impl Sub<Vector> for Vector {
@@ -88,6 +99,23 @@ impl std::fmt::Display for Vector {
 impl std::fmt::Debug for Vector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "<{:?},{:?}>", self.u, self.v)
+    }
+}
+
+impl From<&axial::Point> for Vector {
+    fn from(value: &axial::Point) -> Self {
+        Vector::new(
+            value.q(),
+            value.r()
+        )
+    }
+}
+impl From<axial::Point> for Vector {
+    fn from(value: axial::Point) -> Self {
+        Vector::new(
+            value.q(),
+            value.r()
+        )
     }
 }
 

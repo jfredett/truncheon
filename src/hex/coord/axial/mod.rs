@@ -8,7 +8,15 @@ pub use vector::*;
 
 // A CW spiral along a northward vector in a flat-top configuration
 pub fn spiral() -> impl Iterator<Item = Point> {
-    vec![Point::origin()].into_iter()
+    vec![
+        Point::origin(),
+        Point::new(0,-1),
+        Point::new(1,-1),
+        Point::new(1,0),
+        Point::new(0,1),
+        Point::new(-1,1),
+        Point::new(-1,0),
+    ].into_iter()
 }
 
 #[cfg(test)]

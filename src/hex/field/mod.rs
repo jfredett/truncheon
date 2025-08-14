@@ -29,7 +29,7 @@
 
 
 
-use std::{collections::HashMap, ops::{Index, IndexMut}, sync::{Arc, Mutex, RwLock}};
+use std::{collections::HashMap, sync::{Arc, Mutex, RwLock}};
 
 use crate::hex::coord::axial;
 

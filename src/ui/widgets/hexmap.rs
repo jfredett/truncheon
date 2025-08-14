@@ -1,4 +1,4 @@
-use ratatui::{style::Color, widgets::{canvas::{Canvas, Context, Line, Rectangle}, Block, StatefulWidget, Widget}};
+use ratatui::widgets::{canvas::{Canvas, Context}, Block, StatefulWidget, Widget};
 use tracing::info;
 use truncheon::hex::{coord::{axial, pixel}, field::Field};
 
@@ -10,7 +10,7 @@ pub struct Hexmap {
 
 
 impl Hexmap {
-    pub fn draw(&self, aspect: f64, ctx: &mut Context<'_>, state: &Field<isize>) {
+    pub fn draw(&self, _aspect: f64, ctx: &mut Context<'_>, _state: &Field<isize>) {
         // starting from current origin in the center, spiral outward and render each hex
         // incrementally.
         for ax in axial::spiral() {
@@ -20,7 +20,7 @@ impl Hexmap {
             let ax_vec = ax - axial::Point::origin();
 
             // FIXME: Ugly
-            let shifted_ax = (ax_vec + (self.center - axial::Point::origin()));
+            let shifted_ax = ax_vec + (self.center - axial::Point::origin());
 
            
             // FIXME: Ugly

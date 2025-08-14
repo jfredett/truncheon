@@ -6,5 +6,5 @@ pub mod hex;
 #[macro_use]
 extern crate quickcheck_macros;
 
-#[macro_use]
-extern crate lazy_static;
+// #[macro_use]
+// extern crate lazy_static;

@@ -18,12 +18,12 @@ struct Options {
 #[tokio::main]
 async fn main() {
     tracing::info!("Welcome to Truncheon.");
-    let options = Options::parse();
+    // let options = Options::parse();
 
 
     // Log to a file
-    let (non_blocking, _guard) = tracing_appender::non_blocking(std::fs::File::create("truncheon.log").unwrap());
-    let subscriber = Subscriber::builder()
+    let (_non_blocking, _guard) = tracing_appender::non_blocking(std::fs::File::create("truncheon.log").unwrap());
+    let _subscriber = Subscriber::builder()
         .with_env_filter(EnvFilter::from_default_env())
         .finish();
     let _ = ui::run().await;

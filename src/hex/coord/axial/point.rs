@@ -47,7 +47,7 @@ impl Point {
     pub fn r(&self) -> isize { self.r }
     pub fn s(&self) -> isize { -self.q - self.r }
 
-    pub fn neighbors(&self, range: isize) -> Vec<Point> {
+    pub fn neighbors(&self, _range: isize) -> Vec<Point> {
         todo!()
     }
 }

@@ -1,4 +1,4 @@
-use std::{ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign}, str::FromStr};
+use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
 use crate::hex::coord::pixel;
 

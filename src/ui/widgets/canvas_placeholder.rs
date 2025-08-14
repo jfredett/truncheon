@@ -1,10 +1,5 @@
-use ratatui::widgets::canvas::{Canvas, Rectangle};
-use ratatui::widgets::{Block, Borders, Paragraph, StatefulWidget, Widget};
-use ratatui::layout::{Alignment, Rect};
-use ratatui::style::{Color, Style};
-use ratatui::widgets::Wrap;
+use ratatui::{buffer::Buffer, layout::Rect, style::Color, widgets::{canvas::{Canvas, Rectangle}, Block, StatefulWidget, Widget}};
 
-use ratatui::buffer::Buffer;
 
 
 #[derive(Debug, Default, Clone)]

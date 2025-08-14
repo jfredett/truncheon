@@ -1,16 +1,21 @@
-use std::sync::Mutex;
 
-use ratatui::{style::Color, widgets::{canvas::{Canvas, Context, Line, Rectangle}, Block, StatefulWidget, Widget}};
-use ratatui_image::{picker::Picker, protocol::StatefulProtocol, StatefulImage};
+use std::path::Path;
+
+use ratatui::widgets::StatefulWidget;
+use ratatui_image::{picker::{self, Picker}, StatefulImage};
 use resvg::{tiny_skia, usvg};
 use tracing::info;
 
 #[derive(Default)]
-pub struct SVG {
-}
+pub struct SVG { }
+
 impl SVG {
     pub fn new() -> Self { Self { } }
 }
+
+
+// ---
+
 
 #[derive(Debug, Clone)]
 pub struct SVGTemplate {
@@ -19,12 +24,12 @@ pub struct SVGTemplate {
 
 impl SVGTemplate {
     pub fn from_str(s: &str) -> Self {
-        Self { content: s.to_string() }
+        Self::new(s.to_string())
     }
 
-    pub fn from_file(s: &str) -> Self {
-        Self::new(std::fs::read_to_string(s).unwrap())
-
+    pub fn from_file(p: &Path) -> Self {
+        let s = std::fs::read_to_string(p).unwrap();
+        Self::from_str(&s)
     }
 
     pub fn new(s: String) -> Self {
@@ -71,7 +76,10 @@ impl StatefulWidget for SVG {
         // IMAGE TIME
         // Should use Picker::from_query_stdio() to get the font size and protocol,
         // but we can't put that here because that would break doctests!
-        let mut picker = Picker::from_fontsize((8, 12));
+        let mut picker = Picker::from_query_stdio().unwrap();
+        info!("Protocol is: {:?}", picker.protocol_type());
+        picker.set_protocol_type(picker::ProtocolType::Kitty);
+        info!("Protocol is now force to {:?}", picker.protocol_type());
 
         let rendered_image = image::load_from_memory(&png_data).unwrap();
 

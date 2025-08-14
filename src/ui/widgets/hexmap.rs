@@ -1,4 +1,4 @@
-use ratatui::{style::Color, widgets::{canvas::{Canvas, Context, Line, Rectangle}, StatefulWidget, Widget}};
+use ratatui::{style::Color, widgets::{canvas::{Canvas, Context, Line, Rectangle}, Block, StatefulWidget, Widget}};
 use tracing::info;
 use truncheon::hex::{coord::{axial, pixel}, field::Field};
 
@@ -15,10 +15,15 @@ impl Hexmap {
         // incrementally.
         for ax in axial::spiral() {
             info!("Drawing hex: {}", ax);
+            // Fixme:: hardcoded
             let r = 8.0;
             let ax_vec = ax - axial::Point::origin();
-            // TODO: This needs to be a Pixel Point/Vector type.
+
+            // FIXME: Ugly
             let shifted_ax = (ax_vec + (self.center - axial::Point::origin()));
+
+           
+            // FIXME: Ugly
             // convert ax -> screenspace coords, [0,0] in the center of the canvas
             let p_unscaled = shifted_ax.to_flattop_pixel();
             let p = pixel::Point::new(
@@ -26,7 +31,6 @@ impl Hexmap {
                 p_unscaled.y() * r
             );
 
-            // TEMP: draw a dot instead of a line
             // draw six lines from -- relative to the center point at `p`, scaled to the size
             //
             // -r/2, h  <-> r/2, h
@@ -39,16 +43,17 @@ impl Hexmap {
             // where `r` is the radius of the hex
             // h = r * sqrt(3)/2
 
-            let h = r * (3f64).sqrt() / 2.0;
 
-            let v1 = pixel::Vector::new(-r / 2.0 , h);
-            let v2 = pixel::Vector::new(r / 2.0  , h);
-            let v3 = pixel::Vector::new(r        , 0.0);
-            let v4 = pixel::Vector::new(r / 2.0  , -h);
-            let v5 = pixel::Vector::new(-r / 2.0 , -h);
-            let v6 = pixel::Vector::new(-r       , 0.0);
+            // this should probably not live here
+            let h = (3f64).sqrt() / 2.0;
 
-            // ctx.draw(&pixel::Point::line(p, p)); // center dot
+            let v1 = r * pixel::Vector::new(-0.5 , h);
+            let v2 = r * pixel::Vector::new(0.5  , h);
+            let v3 = r * pixel::Vector::new(1.0  , 0.0);
+            let v4 = r * pixel::Vector::new(0.5  , -h);
+            let v5 = r * pixel::Vector::new(-0.5 , -h);
+            let v6 = r * pixel::Vector::new(-1.0 , 0.0);
+
             ctx.draw(&pixel::Point::line(p + v1, p + v2));
             ctx.draw(&pixel::Point::line(p + v2, p + v3));
             ctx.draw(&pixel::Point::line(p + v3, p + v4));
@@ -57,35 +62,17 @@ impl Hexmap {
             ctx.draw(&pixel::Point::line(p + v6, p + v1));
 
 
-            // let h = aspect * axial::Point::RT_3 / 2.0;
+            // finish layer
 
-            // let (x1, y1) = (p_x - (r / 2.0), p_y + h);
-            // let (x2, y2) = (p_x + (r / 2.0), p_y + h);
-            // info!("Drawing line of {}, from [{}, {}] to [{}, {}]", ax, x1, y1, x2, y2);
-            // ctx.draw(&Line {
-            //     x1, y1, x2, y2,
-            //     color: Color::Blue
-            // });
+            ctx.layer();
 
-            // let (x1, y1) = (p_x + (r / 2.0), p_y + h);
-            // let (x2, y2) = (p_x + r, p_y);
-            // info!("Drawing line of {}, from [{}, {}] to [{}, {}]", ax, x1, y1, x2, y2);
-            // ctx.draw(&Line {
-            //     x1, y1, x2, y2,
-            //     color: Color::Blue
-            // });
-
-            // let (x1, y1) = (p_x + r, p_y);
-            // let (x2, y2) = (p_x + (r / 2.0), p_y - h);
-            // info!("Drawing line of {}, from [{}, {}] to [{}, {}]", ax, x1, y1, x2, y2);
-            // ctx.draw(&Line {
-            //     x1, y1, x2, y2,
-            //     color: Color::Blue
-            // });
-
-            // draw a hex of specific size
             // write shifted coords at bottom of hex
             // write {} of content to center of hex
+            //
+
+            // finish layer
+            
+            ctx.layer();
         }
     }
 }
@@ -106,6 +93,7 @@ impl StatefulWidget for Hexmap {
         let widget = Canvas::default()
             .x_bounds([-100.0, 100.0])
             .y_bounds([-100.0, 100.0])
+            .block(Block::bordered().title("Hexmap"))
             .paint(|ctx| self.draw(aspect, ctx, state));
 
         Widget::render(&widget, area, buf);

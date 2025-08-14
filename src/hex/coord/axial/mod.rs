@@ -1,8 +1,6 @@
 pub mod point;
 pub mod vector;
 
-use std::path::Iter;
-
 pub use point::*;
 pub use vector::*;
 

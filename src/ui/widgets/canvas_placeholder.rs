@@ -11,17 +11,6 @@ use ratatui::buffer::Buffer;
 pub struct CanvasPlaceholder {
 }
 
-// Features:
-// 1. Renders to a specific size
-// 2. mostly doesn't not work
-// Planned Features:
-// 1. tickers the text if size is too small. Maybe even DVD-logos in boxes?
-
-
-
-/// A Placeholder widget that renders to the specific size given, with a border.
-/// It contains the text "Placeholder" in the center of the widget.
-
 impl StatefulWidget for &CanvasPlaceholder {
     type State = ();
 
@@ -35,6 +24,7 @@ impl Widget for &CanvasPlaceholder {
         let widget = Canvas::default()
             .x_bounds([-100.0, 100.0])
             .y_bounds([-100.0, 100.0])
+            .block(Block::bordered().title("Canvas"))
             .paint(|ctx| {
                 ctx.draw(&Rectangle {
                     x: 10.0,

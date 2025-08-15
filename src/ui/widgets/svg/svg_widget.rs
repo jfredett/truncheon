@@ -8,6 +8,7 @@ use crate::ui::widgets::svg::svg_template::SVGTemplate;
 /// SVG Widget, containing any static widget configuration. Rendering takes an [[SVGTemplate]] as
 /// an input to describe what SVG to render.
 #[derive(Default)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct SVG { }
 
 impl SVG {

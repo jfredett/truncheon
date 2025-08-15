@@ -5,14 +5,14 @@ use resvg::{tiny_skia, usvg};
 use crate::ui::widgets::svg::svg_template::SVGTemplate;
 
 
+/// SVG Widget, containing any static widget configuration. Rendering takes an [[SVGTemplate]] as
+/// an input to describe what SVG to render.
 #[derive(Default)]
 pub struct SVG { }
 
 impl SVG {
     pub fn new() -> Self { Self { } }
 }
-
-// ---
 
 impl StatefulWidget for SVG {
     type State = SVGTemplate;
@@ -46,10 +46,11 @@ impl StatefulWidget for SVG {
         // IMAGE TIME
 
         // avoids an issue during testing
-        #[cfg(test)]
-        let picker = Picker::from_fontsize((8, 12));
-        #[cfg(not(test))]
-        let picker = Picker::from_query_stdio().unwrap();
+        let picker = if cfg!(test) {
+            Picker::from_fontsize((8, 12))
+        } else {
+            Picker::from_query_stdio().unwrap()
+        };
 
         let rendered_image = image::load_from_memory(&png_data).unwrap();
 

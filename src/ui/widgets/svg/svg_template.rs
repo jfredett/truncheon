@@ -2,6 +2,19 @@ use std::path::Path;
 
 use tera::{Context, Tera};
 
+/// A container for a template which will be rendered into an SVG.
+///
+/// The render 'pipeline' is straightforward:
+///
+/// 1. Create the SVGTemplate, by default, it renders a blank SVG.
+/// 2. Add 'Element's to the template, these are classes which implement a 'draw' method which
+///    takes an SVGTemplate as input and updates it to properly render whatever element. These can
+///    use the `tera` templating system and it's [[tera::Context]] to dynamically create stuff in
+///    the SVG
+/// 3. Render the template, which returns a string containing the actual SVG to be rendered by
+///    [[SVG]] or other thing.
+///
+///
 #[derive(Debug, Clone)]
 pub struct SVGTemplate {
     // the template-context should be updated here, the render is called afterward, that way it can

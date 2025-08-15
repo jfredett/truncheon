@@ -139,8 +139,6 @@ impl Sub<pixel::Point> for pixel::Point {
 
 #[cfg(test)]
 mod test {
-    use rstest::rstest;
-
     use super::*;
 
     #[quickcheck]
@@ -161,22 +159,4 @@ mod test {
 
         p == p_parsed
     }
-
-    // #[rstest]
-    // #[case("[0,0]", "<1,1>", "[1,1]")]
-    // #[case("[1,0]", "<1,1>", "[2,1]")]
-    // #[case("[1,0]", "<-1,1>", "[0,1]")]
-    // #[case("[-1,-1]", "<1,1>", "[0,0]")]
-    // fn add_vector_to_point(#[case] p: Point, #[case] v: pixel::Vector, #[case] x: Point) {
-    //     assert_eq!(p + v, x);
-    // }
-
-    // #[rstest]
-    // #[case("[0,0]", "<1,1>", "[-1,-1]")]
-    // #[case("[1,0]", "<1,1>", "[0,-1]")]
-    // #[case("[1,0]", "<-1,1>", "[2,-1]")]
-    // #[case("[-1,-1]", "<1,1>", "[-2,-2]")]
-    // fn sub_vector_to_point(#[case] p: Point, #[case] v: pixel::Vector, #[case] x: Point) {
-    //     assert_eq!(p - v, x);
-    // }
 }

@@ -77,7 +77,7 @@ mod test {
 
     #[rstest]
     fn insert_and_retrieve() {
-        let mut field : Field<isize> = Field::new();
+        let field : Field<isize> = Field::new();
         let coord = axial::Point::new(0,0);
         let coord2 = axial::Point::new(0,1);
         let coord3 = axial::Point::new(1,1);

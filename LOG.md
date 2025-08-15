@@ -1,0 +1,91 @@
+# Prehistory
+
+Rough idea, this is something of a DM screen/note integration tool. Foundry is a very nice _display_ tool, it's not a
+great _build_ tool; I want to export a 'view' of the underlying data to foundry (ideally via tiles), so that I can
+incrementally expand the world.
+
+Truncheon is there to manage all the math of encounter checking, hex populating, etc. The goal is to specify 'regions',
+which are collections of 'fields' of hexes for specific purposes. So there is a 'terrain' field, an 'encounter' field, a
+'weather' field, etc. these all get bundled up into a 'region' which is a bounded subset of axial coordinates on the
+'world' map it inhabits. Regions can overlap, and being in a region can trigger effects on players, wandering enemies,
+etc.
+
+I think the way it may need to work is to control an assistant GM user via websocket. I do need to look at the rest API
+module I saw though -- https://github.com/cclloyd/planeshift -- under it's hood is https://pptr.dev/ which may be an
+alternative.
+
+Ideally this gets compiled to WASM, and runs in-browser, I may be able to claw back the foundry api directly that way.
+
+Ideally this tool stores abstract encounters (abstracting in scale, difficulty, etc), and manages all my usage die and
+such.
+
+
+##
+
+TODO:
+
+1. Polygon Shape for canvas, should draw each successive pair of points as a line.
+2. Explore egui
+3. Event loop for parsing commands from `input`
+4. finish spiral impl.
+5. Could look into writing out a .bmp or similar and then using ratatui-img to display it wholesale in terminal; this'd
+   allow for in-terminal graphics but w/ higher fidelity/using image sets.
+    - This would obviate the need for egui, but may be wildly more complicated. It also might be a fuckload easier, not
+      sure.
+    - Something like -- draw an SVG, render to bmp or whatever, display with terminal graphics.
+    - I actually like that pipeline, take ratatui-image, render that instead of the canvas, the math still maths for an
+      SVG but should be somewhat easier, then I just need to convert SVG -> some image format and load it.
+
+
+The whole process can be wrapped up in a widget, the widget will render out an SVG based on changes to an underlying
+datastructure, when the DS changes, it re-renders the image, and updates the UI accordingly. I'll want that to be async,
+probably.
+
+```rust
+// example pulled from https://github.com/linebender/resvg/blob/main/crates/resvg/examples/custom_href_resolver.rs
+// I mostly care about the render path and the templating step it does where it swaps out the image.
+fn main() {
+    let mut opt = usvg::Options::default();
+
+    let ferris_image = std::sync::Arc::new(std::fs::read("./examples/ferris.png").unwrap());
+
+    // We know that our SVG won't have DataUrl hrefs, just return None for such case.
+    let resolve_data = Box::new(|_: &str, _: std::sync::Arc<Vec<u8>>, _: &usvg::Options| None);
+
+    // Here we handle xlink:href attribute as string,
+    // let's use already loaded Ferris image to match that string.
+    let resolve_string = Box::new(move |href: &str, _: &usvg::Options| match href {
+        "ferris_image" => Some(usvg::ImageKind::PNG(ferris_image.clone())),
+        _ => None,
+    });
+
+    // Assign new ImageHrefResolver option using our closures.
+    opt.image_href_resolver = usvg::ImageHrefResolver {
+        resolve_data,
+        resolve_string,
+    };
+
+    let svg_data = std::fs::read("./examples/custom_href_resolver.svg").unwrap();
+    let tree = usvg::Tree::from_data(&svg_data, &opt).unwrap();
+
+    let pixmap_size = tree.size().to_int_size();
+    let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height()).unwrap();
+
+    resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
+
+    pixmap.save_png("custom_href_resolver.png").unwrap();
+}
+```
+
+resvg claims some degree of speed, but I doubt I'll get extremely high framerates doing things this way, so egui may
+still be the longterm play.
+
+
+# 14-AUG-2025
+
+## 1510
+
+I got the svg pipeline working, it seems pretty snappy but I'm also not drawing it most of the time. Next step is to
+extend the template stuff to allow for drawing shapes and whatnot.
+
+

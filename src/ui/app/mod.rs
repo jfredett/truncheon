@@ -149,7 +149,7 @@ impl UI {
         // to show expanded info.
         Widget::render(&Placeholder::for_section(trail_slice).text("TRAIL"), trail_slice, frame.buffer_mut());
         // A canvas, maybe extend placeholder first to do a dummy canvas.
-        StatefulWidget::render(SVG::new(), player_map_slice, frame.buffer_mut(), &mut SVGTemplate::from_file(Path::new("./tests/fixtures/svg/example.svg")));
+        StatefulWidget::render(SVG::new(), player_map_slice, frame.buffer_mut(), &mut SVGTemplate::from_file(Path::new("./tests/fixtures/svg/template.svg")));
         StatefulWidget::render(Hexmap::default(), gm_map_slice, frame.buffer_mut(), &mut Field::<isize>::new());
         Widget::render(&Placeholder::for_section(output_section).text("OUTPUT"), output_section, frame.buffer_mut());
         Widget::render(&Placeholder::for_section(input_section).text("> INPUT"), input_section, frame.buffer_mut());
@@ -162,6 +162,7 @@ lazy_static! {
         .constraints([
                 Constraint::Percentage(50),
                 Constraint::Percentage(30),
+                Constraint::Percentage(20),
                 Constraint::Min(1),
             ].as_ref());
 
@@ -176,7 +177,7 @@ lazy_static! {
         .direction(ratatui::layout::Direction::Vertical)
         .constraints([
             Constraint::Min(1),
-            Constraint::Length(1)
+            Constraint::Length(3)
         ].as_ref());
 
     static ref TEST_FIELD : Field<isize> = {

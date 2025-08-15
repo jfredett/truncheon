@@ -1,0 +1,34 @@
+---
+source: src/ui/widgets/canvas_placeholder.rs
+expression: buffer
+---
+Buffer {
+    area: Rect { x: 0, y: 0, width: 8, height: 8 },
+    content: [
+        "┌Canvas┐",
+        "│      │",
+        "│      │",
+        "│   ⠃  │",
+        "│      │",
+        "│      │",
+        "│      │",
+        "└──────┘",
+    ],
+    styles: [
+        x: 0, y: 0, fg: White, bg: Black, underline: Reset, modifier: NONE,
+        x: 1, y: 1, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 7, y: 1, fg: White, bg: Black, underline: Reset, modifier: NONE,
+        x: 1, y: 2, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 7, y: 2, fg: White, bg: Black, underline: Reset, modifier: NONE,
+        x: 1, y: 3, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 4, y: 3, fg: Red, bg: Reset, underline: Reset, modifier: NONE,
+        x: 5, y: 3, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 7, y: 3, fg: White, bg: Black, underline: Reset, modifier: NONE,
+        x: 1, y: 4, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 7, y: 4, fg: White, bg: Black, underline: Reset, modifier: NONE,
+        x: 1, y: 5, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 7, y: 5, fg: White, bg: Black, underline: Reset, modifier: NONE,
+        x: 1, y: 6, fg: White, bg: Reset, underline: Reset, modifier: NONE,
+        x: 7, y: 6, fg: White, bg: Black, underline: Reset, modifier: NONE,
+    ]
+}

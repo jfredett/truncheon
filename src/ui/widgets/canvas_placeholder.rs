@@ -37,10 +37,40 @@ impl Widget for &CanvasPlaceholder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use insta::assert_debug_snapshot;
+    use rstest::rstest;
 
     mod rendering {
+
+        use ratatui::style::Style;
+
         use super::*;
 
+        #[rstest]
+        fn renders_as_expected_stateless() {
+            let rect = Rect::new(0, 0, 8, 8);
+            let mut buffer = Buffer::empty(rect);
+            buffer.set_style(rect, Style::default().fg(Color::White).bg(Color::Black));
+
+            let placeholder = CanvasPlaceholder::default();
+
+            Widget::render(&placeholder, rect, &mut buffer);
+
+            assert_debug_snapshot!(buffer);
+        }
+
+        #[rstest]
+        fn renders_as_expected_stateful() {
+            let rect = Rect::new(0, 0, 8, 8);
+            let mut buffer = Buffer::empty(rect);
+            buffer.set_style(rect, Style::default().fg(Color::White).bg(Color::Black));
+
+            let placeholder = CanvasPlaceholder::default();
+
+            StatefulWidget::render(&placeholder, rect, &mut buffer, &mut ());
+
+            assert_debug_snapshot!(buffer);
+        }
     }
 }
 

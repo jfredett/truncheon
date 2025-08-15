@@ -24,7 +24,7 @@ mod test {
     use super::*;
 
     #[rstest]
-    fn spiral_out__keep_going() {
+    fn spiral_out_keep_going() {
         let mut spiral = spiral();
         assert_eq!(spiral.next(), Some(Point::origin()));
         assert_eq!(spiral.next(), Some(Point::new( 0,-1)));

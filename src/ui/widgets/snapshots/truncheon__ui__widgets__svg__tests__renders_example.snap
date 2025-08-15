@@ -1,6 +1,5 @@
 ---
 source: src/ui/widgets/svg.rs
-assertion_line: 104
 expression: buffer
 ---
 Buffer {

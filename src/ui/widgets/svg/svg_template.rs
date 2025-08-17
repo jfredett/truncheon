@@ -41,13 +41,13 @@ impl SVGTemplate {
         Self::from_str(&s)
     }
 
-
     pub fn new(content: String) -> Self {
         Self { context: Context::default(), content }
     }
 
     pub fn render(&self) -> String {
         let result = Tera::one_off(&self.content, &self.context, false);
+        tracing::info!("{:?}", &result);
         result.unwrap()
 
 
@@ -62,7 +62,16 @@ impl SVGTemplate {
         // needed.
     }
 
-    pub fn add(&mut self, element: &impl SVGElement) {
+    pub fn set_width(&mut self, width: u16) {
+        self.context.insert("width", &width);
+    }
+
+    pub fn set_height(&mut self, height: u16) {
+        self.context.insert("height", &height);
+    }
+
+
+    pub fn add(&mut self, _element: &impl SVGElement) {
         todo!();
     }
 }
@@ -78,7 +87,7 @@ pub struct Rect {
 }
 
 impl SVGElement for Rect {
-    fn draw(&self, template: &SVGTemplate) -> String {
+    fn draw(&self, _template: &SVGTemplate) -> String {
         r##"<rect x="100" y="100" width="100" height="100" rx="25" />"##.to_string()
     }
 }

@@ -1,6 +1,4 @@
 use ratatui::{crossterm::event::{Event, KeyCode}, layout::{Constraint, Layout}, style::{Color, Style}, widgets::{StatefulWidget, Widget}, Frame};
-use tracing::{instrument::WithSubscriber, Subscriber};
-use tracing_subscriber::{fmt::format, EnvFilter};
 use truncheon::hex::{coord::axial, field::Field};
 
 use std::{collections::HashMap, fmt::Debug, path::Path, str::FromStr};

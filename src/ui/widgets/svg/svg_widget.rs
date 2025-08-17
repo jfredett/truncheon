@@ -1,10 +1,8 @@
-use std::{collections::HashMap, fs, path::PathBuf, sync::{self, Arc, RwLock}};
-
-use ratatui::widgets::StatefulWidget;
+use ratatui::widgets::{Block, StatefulWidget, Widget};
 use ratatui_image::{picker::Picker, StatefulImage};
 use resvg::{tiny_skia, usvg};
 
-use crate::ui::widgets::svg::svg_template::SVGTemplate;
+use crate::ui::widgets::svg::{options::SVG_OPTS, svg_template::SVGTemplate};
 
 
 /// SVG Widget, containing any static widget configuration. Rendering takes an [[SVGTemplate]] as
@@ -17,82 +15,6 @@ impl SVG {
     pub fn new() -> Self { Self { } }
 }
 
-
-pub type Image = Arc<usvg::ImageKind>;
-
-#[derive(Default)]
-pub struct ImageCache {
-    content: RwLock<HashMap<PathBuf, Image>>
-}
-
-impl ImageCache {
-    pub fn get(&self, path: &std::path::Path) -> Option<Image> {
-        let cache = self.content.read().unwrap();
-        let img_path = fs::canonicalize(path).expect("File not found");
-
-        tracing::info!("Cache keys are {:?}", cache);
-        tracing::info!("Checking cache for {}", img_path.display());
-
-        cache.get(&img_path).cloned()
-    }
-
-    pub fn add(&self, path: &str) -> Option<Image> {
-        let img_path = fs::canonicalize(path).expect("File not found");
-
-        if let Some(x) = self.get(&img_path) {
-            tracing::info!("Cache hit for {}", img_path.display());
-            return Some(x)
-        }
-
-        tracing::info!("looking at {}", img_path.display());
-        let image_data = fs::read(&img_path).expect("Failed to read");
-        let len = image_data.len();
-
-        let img = Arc::new(image_data);
-
-        let entry = Arc::new(if path.ends_with("png") {
-            tracing::info!("found png, loaded, {} bytes wide", len);
-            usvg::ImageKind::PNG(img.clone())
-        } else if path.ends_with("webp") {
-            tracing::info!("found webp, loaded, {} bytes wide", len);
-            usvg::ImageKind::WEBP(img.clone())
-        } else {
-            tracing::error!("unrecognized file format");
-            return None
-        });
-
-        { // write to the cache
-            let mut cache = self.content.write().unwrap();
-            cache.insert(img_path.into(), entry.clone());
-        }
-
-        Some(entry)
-    }
-
-}
-
-pub static IMAGE_CACHE : sync::LazyLock<ImageCache> = sync::LazyLock::new(|| {
-    ImageCache::default()
-});
-
-pub static SVG_OPTS : sync::LazyLock<usvg::Options> = sync::LazyLock::new(|| {
-    let mut opt = usvg::Options::default();
-    opt.fontdb_mut().load_system_fonts();
-    opt.image_rendering = usvg::ImageRendering::OptimizeSpeed;
-    let resolve_data = Box::new(|_: &str, _: Arc<Vec<u8>>, _: &usvg::Options| None);
-    opt.image_href_resolver = usvg::ImageHrefResolver {
-        resolve_data,
-        resolve_string: Box::new(move |href, _| -> Option<usvg::ImageKind> {
-            // FIXME: This is almost certainly extremely dangerous. Good thing I don't know what
-            // I'm doing.
-            // FIXME: Don't ever try to do this with a broken link, you monster.
-
-            IMAGE_CACHE.add(href).map(|img| img.as_ref().clone())
-        })
-    };
-    opt
-});
-
 impl StatefulWidget for SVG {
     type State = SVGTemplate;
 
@@ -102,12 +24,32 @@ impl StatefulWidget for SVG {
         tracing::info!("Preparing to render");
 
         // SVG TEMPLATE RENDERING
+ 
+
+        // Get the current font size and other info about the terminal
+        let picker = if cfg!(test) {
+            // avoids an issue during testing by fixing the fontsize, normally this is unset for
+            // the test
+            Picker::from_fontsize((8, 12))
+        } else {
+            Picker::from_query_stdio().unwrap()
+        };
 
         // Prep the content
+
+        // set the SVG width/height to match the container the widget lives in.
+        // This may need to be more complicated to manage margins and other such. For now
+        // this works pretty alright
+        let (f_w, f_h) = picker.font_size();
+        state.set_width(area.width * f_w);
+        state.set_height(area.height * f_h);
         let content = state.render();
 
-        // RENDER PHASE
 
+        // NOTE: I think all this could be pre-prepped in the widget state? at least some of it.
+        // Picker at least, probably bits of the tree, there's waste here.
+
+        // RENDER PHASE
 
         // Create the SVG DOM
         let tree = usvg::Tree::from_str(&content, &SVG_OPTS).unwrap();
@@ -127,19 +69,17 @@ impl StatefulWidget for SVG {
 
         // IMAGE TIME
 
-        // avoids an issue during testing
-        let picker = if cfg!(test) {
-            Picker::from_fontsize((8, 12))
-        } else {
-            Picker::from_query_stdio().unwrap()
-        };
 
         let mut image = picker.new_resize_protocol(rendered_image);
+        tracing::debug!("picker: {:?}", picker);
 
+        let container = Block::new();
         let widget = StatefulImage::default();
+        let container_area = container.inner(area);
 
         tracing::info!("Rendering to ratatui screen");
-        StatefulWidget::render(widget, area, buf, &mut image);
+        Widget::render(container, area, buf);
+        StatefulWidget::render(widget, container_area, buf, &mut image);
     }
 }
 

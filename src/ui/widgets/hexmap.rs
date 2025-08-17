@@ -1,5 +1,4 @@
 use ratatui::widgets::{canvas::{Canvas, Context}, Block, StatefulWidget, Widget};
-use tracing::info;
 use truncheon::hex::{coord::{axial, pixel}, field::Field};
 
 #[derive(Debug, Clone)]

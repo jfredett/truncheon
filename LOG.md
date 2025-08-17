@@ -114,3 +114,28 @@ Hey, it's down from the 53 minutes it took on the first run.
 
 It also appears that the use of `defs` deeply slows the rendering down. So maybe just writing the `image` directly makes
 sense. This is inline with what I want to do with `SVGTemplate` anyway, so I think that's the way I'll go.
+
+I did notice that when working w/ the webp images, it would frequently miscalculate the size of the grid it should
+render. I need to have this derive not from the SVG dimensions, but set the offset based on input values from the
+widget, as well as the visible space and 'zoom' level of the widget. Some transform exists from the `ratatui-image`
+widget's `Rect` and the SVG's native bounding box based on some scalar zoom level which would map coordinates and
+heights and stuff. I'll need to figure that out and that should resolve the issue. It doesn't seem to happen with .pngs,
+I assume because they are more strict about their bounding box. webp is a mystery to me, all file formats are mysteries,
+really.
+
+For now I'll just use pngs.
+
+using images instead of the polyline does mean that I'll need to figure out how to convert from where-ever the `png` is
+anchored to the center of the hex it contains. There may be a way to control where the drag point is in SVG, I don't
+know.
+
+## 1438
+
+Definitely a render-box issue, I've added a hardcoded 100% rect to the template and it actually should have excluded
+some stuff, it appears the width/height is controlled by parameters on the <svg> element.
+controls what part of a larger document needs to be rendered, so I think that's also where general camera control logic
+ends up.
+
+https://www.w3.org/TR/SVG/coords.html#TransformProperty
+
+Seems to be useful for this

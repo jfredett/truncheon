@@ -1,5 +1,6 @@
 #![feature(adt_const_params)]
 
+pub mod util;
 pub mod hex;
 
 #[cfg(test)]

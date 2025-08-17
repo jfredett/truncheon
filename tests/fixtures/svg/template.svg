@@ -1,7 +1,8 @@
 <!-- overlapping squares with transparency, from wikimedia commons https://commons.wikimedia.org/wiki/SVG_examples -->
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!-- width/height need to be pulled from (tera?) rendering context, probably provided by the SVG widget -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{{ width }}" height="{{ height }}">
     <defs>
          <!-- <pattern id="hexwebp" height="500" width="500" patternContentUnits="objectBoundingBox"> -->
          <!--      <image preserverAspectRatio="none" height="1" width="1" xlink:href="./tests/fixtures/images/hex1.webp" /> -->
@@ -11,8 +12,9 @@
          <!-- </pattern> -->
     </defs>
 
-    <image preserverAspectRatio="none" x="0" y="0" height="224" width="194" xlink:href="./tests/fixtures/images/hex1.png" />
-    <image preserverAspectRatio="none" x="75" y="42" height="224" width="194" xlink:href="./tests/fixtures/images/hex1.png" />
+    <image preserverAspectRatio="none" x="0" y="0" height="224" width="194" xlink:href="./tests/fixtures/images/hex1.webp" />
+    <image preserverAspectRatio="none" x="75" y="42" height="224" width="194" xlink:href="./tests/fixtures/images/hex1.webp" />
 
+    <rect x="0" y="0" width="100%" height="100%" stroke="#ffffff" fill-opacity="0%" />
 
 </svg>

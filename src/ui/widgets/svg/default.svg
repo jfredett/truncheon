@@ -1,0 +1,8 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Loop over each SVG Element, render it to a string. The elements may contain `tera` templating. -->
+    {% for elt in elements %}
+        elt
+    {% endfor %}
+</svg>

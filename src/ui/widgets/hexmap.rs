@@ -14,7 +14,7 @@ impl Hexmap {
         // starting from current origin in the center, spiral outward and render each hex
         // incrementally.
         for ax in axial::spiral() {
-            info!("Drawing hex: {}", ax);
+            // info!("Drawing hex: {}", ax);
             // Fixme:: hardcoded
             let r = 8.0;
             let ax_vec = ax - axial::Point::origin();

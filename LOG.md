@@ -88,4 +88,29 @@ still be the longterm play.
 I got the svg pipeline working, it seems pretty snappy but I'm also not drawing it most of the time. Next step is to
 extend the template stuff to allow for drawing shapes and whatnot.
 
+# 17-AUG-2025
 
+## 0130
+
+Good progress. I factored out some caches, though the image one isn't working right just yet. I still need to review the
+render function to make sure I got it wired up correctly.
+
+I need to get the UI async for this approach to work. I don't need particularly high framerates for the map especially
+(since it will be mostly static most of the time), and in fact a longer render time for the 'static' portion should make
+the non-static portion easier to make it's own, transparent layer that gets dropped on top. Pulling the caches out to be
+async also just makes sense, they're already tossing Arcs around with impugnity.
+
+The image cache is currently caching the whole ImageKind, but I think it should actually cache the tag and data
+separately, this would allow me to reconstruct the imagekind at the last minute, avoiding an extra Arc and an unpleasant
+`.as_ref().clone()`
+
+I'm still fighting to get it to fill the polyline hexagon with the image, but practically speaking I can also probably
+just use `image` tags instead, and layer the hexgrid on top of it.
+
+As it is, the process takes about 3s to render the svg as a png, I still can't actually see the image that's slowing it
+down, but the cache works, I just eat a 3s render time.
+
+Hey, it's down from the 53 minutes it took on the first run.
+
+It also appears that the use of `defs` deeply slows the rendering down. So maybe just writing the `image` directly makes
+sense. This is inline with what I want to do with `SVGTemplate` anyway, so I think that's the way I'll go.

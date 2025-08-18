@@ -139,3 +139,28 @@ ends up.
 https://www.w3.org/TR/SVG/coords.html#TransformProperty
 
 Seems to be useful for this
+
+# 18-AUG-2025
+
+## 0921
+
+The process for rendering a hexfield is going to involve the following parts:
+
+1. Map from image dimensions (which I should look up on load and store in the cache) to nominal hex dimensions, scaling
+   everything to the same scale. This'll require some math to determine the anchor points in the SVG for the image
+2. Figure out the viewbox/viewport/svg size stuff. This might be just ensuring I'm not working near the SVG origin
+   (since I think negative x/y values are not supported? Not sure. Might be able to solve this by making matching
+    adjustments to the viewport offset when I select subsections).
+        - Indeed, my example images have a big pile of surrounding transparency, the hexes are centered, though, so it
+should be easy enough to find the center dynamically. which should allow placement relative to the center, it is
+absolutely top-left anchored atm (by experimentation).
+        - This may also explain why the `fill` wasn't working, it was, we were just only seeing the transparent section.
+          I'll need to experiment to see if adding back the `defs` saves time once there are a lot of hexes being shown.
+        - an upshot might be that I could make a _texture_ to apply to the hex, instead of a hex image; contiguous
+regions of hexes could pull from coordinated parts of the texture and get semi-random changes to add variety.
+
+3. Use existing hex math stuff to place all the hexes, this will probably need some more math to go from nominal hexes
+   in radial space to the image dimensions which will be weird.
+
+Before any of that I _have_ to make this shit async because it is so annoying to wait for the thing. It'd also be good
+to get it to automatically rerender every few seconds or whatever.

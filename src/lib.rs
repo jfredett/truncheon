@@ -1,4 +1,5 @@
-#![feature(adt_const_params)]
+#![feature(adt_const_params, random)]
+
 
 pub mod util;
 pub mod hex;

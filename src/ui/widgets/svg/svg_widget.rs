@@ -1,3 +1,4 @@
+use image::DynamicImage;
 use ratatui::widgets::{Block, StatefulWidget, Widget};
 use ratatui_image::{picker::Picker, StatefulImage};
 use resvg::{tiny_skia, usvg};
@@ -9,47 +10,29 @@ use crate::ui::widgets::svg::{options::SVG_OPTS, svg_template::SVGTemplate};
 /// an input to describe what SVG to render.
 #[derive(Default)]
 #[allow(clippy::upper_case_acronyms)]
-pub struct SVG { }
-
-impl SVG {
-    pub fn new() -> Self { Self { } }
+pub struct SVG {
+    png_data: DynamicImage
 }
 
-impl StatefulWidget for SVG {
-    type State = SVGTemplate;
+impl SVG {
+    pub fn new() -> Self { Self::default() }
 
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer, state: &mut Self::State) {
+    pub fn update(&mut self, area: ratatui::prelude::Rect, state: &mut SVGTemplate) {
         // TODO: Error handling, lots of bare unwraps running around
         //
         tracing::info!("Preparing to render");
 
         // SVG TEMPLATE RENDERING
  
-
-        // Get the current font size and other info about the terminal
-        let picker = if cfg!(test) {
-            // avoids an issue during testing by fixing the fontsize, normally this is unset for
-            // the test
-            Picker::from_fontsize((8, 12))
-        } else {
-            Picker::from_query_stdio().unwrap()
-        };
-
-        // Prep the content
-
-        // set the SVG width/height to match the container the widget lives in.
-        // This may need to be more complicated to manage margins and other such. For now
-        // this works pretty alright
-        let (f_w, f_h) = picker.font_size();
-        state.set_width(area.width * f_w);
-        state.set_height(area.height * f_h);
-        let content = state.render();
-
+        state.set_width(area.width);
+        state.set_height(area.height);
 
         // NOTE: I think all this could be pre-prepped in the widget state? at least some of it.
         // Picker at least, probably bits of the tree, there's waste here.
 
         // RENDER PHASE
+
+        let content = state.render();
 
         // Create the SVG DOM
         let tree = usvg::Tree::from_str(&content, &SVG_OPTS).unwrap();
@@ -63,16 +46,29 @@ impl StatefulWidget for SVG {
         tracing::info!("Rendering SVG");
         resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
         tracing::info!("Encoding as PNG");
-        let png_data = pixmap.encode_png().unwrap();
+        let png_data: Vec<u8> = pixmap.encode_png().unwrap_or_default();
+
         tracing::info!("Loading into Memory");
-        let rendered_image = image::load_from_memory(&png_data).unwrap();
+        let rendered_image = image::load_from_memory(&png_data).expect("Failed to load PNG from memory");
+        self.png_data = rendered_image;
+    }
+}
 
-        // IMAGE TIME
+impl StatefulWidget for &SVG {
+    type State = SVGTemplate;
 
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer, _state: &mut Self::State) {
+        // FIXME: this _def_ shouldn't happen in here
+        let picker = if cfg!(test) {
+            // avoids an issue during testing by fixing the fontsize, normally this is unset for
+            // the test
+            Picker::from_fontsize((8, 12))
+        } else {
+            Picker::from_query_stdio().unwrap_or(Picker::from_fontsize((8,12)))
+        };
 
-        let mut image = picker.new_resize_protocol(rendered_image);
-        tracing::debug!("picker: {:?}", picker);
-
+        // FIXME: non-ideal clone.
+        let mut image = picker.new_resize_protocol(self.png_data.clone());
         let container = Block::new();
         let widget = StatefulImage::default();
         let container_area = container.inner(area);

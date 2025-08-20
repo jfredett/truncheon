@@ -1,4 +1,4 @@
-use tracing_subscriber::{fmt::{format, Subscriber}, EnvFilter};
+#![feature(adt_const_params, random)]
 
 use clap::{command, Parser};
 #[cfg(test)]
@@ -20,13 +20,6 @@ async fn main() {
     tracing::info!("Welcome to Truncheon.");
     // let options = Options::parse();
 
-    // Log to a file
-    let (_non_blocking, _guard) = tracing_appender::non_blocking(std::fs::File::create("truncheon.log").unwrap());
-    let subscriber = Subscriber::builder()
-        .with_env_filter(EnvFilter::from_default_env())
-        .fmt_fields(format::PrettyFields::new())
-        .finish();
-    _ = tracing::subscriber::set_default(subscriber);
     let _ = ui::run().await;
 }
 

@@ -164,3 +164,46 @@ regions of hexes could pull from coordinated parts of the texture and get semi-r
 
 Before any of that I _have_ to make this shit async because it is so annoying to wait for the thing. It'd also be good
 to get it to automatically rerender every few seconds or whatever.
+
+## 1024
+
+Looking at the async stuff, it may be that I need to separate the drawing side of the `SVG` stuff and the display. The
+widget can have an async 'update' function which stores the pngdata in the struct, the render just splats the pngdata to
+the screen.
+
+## 1113
+
+I started to tease apart the update/render parts of the svg so I can async it. The `picker` part is a little tricky to
+locate, and I've got a lot of state that needs managing, but I think I should be able to pass through the picker
+information (perhaps as part of the state for SVG?).
+
+It feels like there should be a trait for 'Async' widgets (similar to stateful widgets), which are widgets with state
+that endure a separate update loop. Each would get all the current layout information, so that, for instance, I can
+pre-render the next SVG frame to the correct size, but one would get called to manage FPS and the other for actual state
+upate?
+
+IDK, feels like there's a pattern here, haven't found it yet.
+
+I definitely think the layout should get cached, maybe I just don't like immediate-mode UI? :) It's just a set of rects
+that get calculated, it's another thing that I could stick in an async update loop and reference everywhere.
+
+One crazy idea here would be to refactor so the _whole UI_ is done as an SVG. At that point I'm just sort of streaming
+graphics over the terminal protocol so it's a little bit silly, but I suppose that's probably what, e.g., canvas is
+doing in a browser over HTTP.
+
+## 1319
+
+I think I'm moving inexorably towards an event-loop style system with a bunch of asynchronous handlers with a
+framerate-managed render loop. The current method does a loop like:
+
+```
+1. Check for exit
+2. No exit, then handle events (sync)
+3. Update (async)
+4. synchronize
+5. Draw
+```
+
+What would be ideal is if the startup ran two systems, the frontend UI which just does the `draw` step on a
+fixed-framerate-target loop, and a 'backend' component which is asynchronous. The frontend would capture events and send
+them to the backend, and request data from the backend when needed to render.

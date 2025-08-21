@@ -207,3 +207,43 @@ framerate-managed render loop. The current method does a loop like:
 What would be ideal is if the startup ran two systems, the frontend UI which just does the `draw` step on a
 fixed-framerate-target loop, and a 'backend' component which is asynchronous. The frontend would capture events and send
 them to the backend, and request data from the backend when needed to render.
+
+# 21-AUG-2025
+
+## 0102
+
+Still not super happy with the PNG rendering performance, but there is much to do to improve it, and it's mostly
+asynchronous now, all the major issues are worked out with the wiring, just needs a bunch of polish and tests.
+
+I dislike how I'm managing the layout on multiple levels, but it's the most flexible thing for right now, eventually it
+probably makes sense to have it have a fixed initial size so that the render loop can start without a blank screen. I've
+already hardcoded it to use the `kitty` protocol to avoid all the `picker` nonsense that broke input for quite a while.
+
+## 0924
+
+I decided to go to sleep mid thought when I realized what time it was.
+
+The way the layout works right now, it drops everything into a (fresh) hashmap on each call to `build_layout`, which is
+pretty frequent. This means that I've got strings littered everywhere. In this form, it's quite easy to get hard crashes
+due to uncatchable typos, which is not ideal. The obvious solution is to use an enum, but that adds some overhead to
+re-arranging sections while I work on it, so I think I'm going to tolerate the pain until I've firmed up the UI design,
+then encode it.
+
+Next step is to chase down the scaling issue, and then work to send the actual png generation as an async task, which I
+think should make the UI stay responsive during rendering.
+
+## 1028
+
+I think I need to create an entirely separate thread that communicates over a channel. I've been trying to get
+`tokio::task` to work, but I can't seem to find the right invocation to get it to be non-blocking. Instead I could start
+up the `App` and `UI` as separate threads that communicate, alternatively, a PNG renderer that runs in a separate
+thread, maybe using a shared memory space? Not quite sure how I want to proceed.
+
+## 1145
+
+https://stackoverflow.com/questions/61752896/how-to-create-a-dedicated-threadpool-for-cpu-intensive-work-in-tokio
+
+Seems relevant.
+
+I also need to do some kind of caching/don't re-render if the template hasn't changed. Probably a simple hash scheme'd
+do it.

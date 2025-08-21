@@ -160,7 +160,7 @@ impl UI {
         self.build_layout();
         // FIXME: This is also non-ideal duplication. I suppose I may want to swap out svgs during an
         // update, but this doesn't feel great as is
-        self.player_map.update(self.layout["player_map_slice"], &mut SVGTemplate::from_file(Path::new("./tests/fixtures/svg/template.svg")));
+        self.player_map.update(self.layout["player_map_slice"], &mut SVGTemplate::from_file(Path::new("./tests/fixtures/svg/template.svg"))).await;
     }
 
     fn tui_logger_widget(&self) -> TuiLoggerSmartWidget {

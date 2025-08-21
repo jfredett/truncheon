@@ -13,7 +13,7 @@ use crate::ui::tui::Tui;
 
 pub async fn run() -> Result<(), Box<dyn Error>> {
     let app = Arc::new(RwLock::new(UI::new()));
-    let mut tui = Tui::new(app.clone(), 10.0, 2.0).unwrap();
+    let mut tui = Tui::new(app.clone(), 1.0 / 10.0, 5.0).unwrap();
     tui.run().await?;
 
     Ok(())

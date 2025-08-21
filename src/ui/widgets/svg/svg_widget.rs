@@ -17,21 +17,31 @@ pub struct SVG {
 impl SVG {
     pub fn new() -> Self { Self::default() }
 
-    pub fn update(&mut self, area: ratatui::prelude::Rect, state: &mut SVGTemplate) {
+    // this area should be pixel-sized, not font-sized, maybe I need a separate wrapper for rects?
+    pub async fn update(&mut self, area: ratatui::prelude::Rect, state: &mut SVGTemplate) {
         // TODO: Error handling, lots of bare unwraps running around
         //
         tracing::info!("Preparing to render");
 
+        // this should be something more like:
+        // PNGRenderer::send(template, area) -> Return channel
+        // on render, await the return channel to respond and then pull the data from png_data?
+
+
+        let mut picker = Picker::from_fontsize((8,12));
+        picker.set_protocol_type(ratatui_image::picker::ProtocolType::Kitty);
+        let (width_adj, height_adj) = picker.font_size();
+
         // SVG TEMPLATE RENDERING
  
-        state.set_width(area.width);
-        state.set_height(area.height);
+        tracing::debug!("Recieved rect {:?}", area);
+        state.set_width(area.width * width_adj * 3);
+        state.set_height(area.height * height_adj * 4);
 
         // NOTE: I think all this could be pre-prepped in the widget state? at least some of it.
         // Picker at least, probably bits of the tree, there's waste here.
 
         // RENDER PHASE
-
         let content = state.render();
 
         // Create the SVG DOM
@@ -62,12 +72,12 @@ impl StatefulWidget for &SVG {
         let mut picker = Picker::from_fontsize((8,12));
         picker.set_protocol_type(ratatui_image::picker::ProtocolType::Kitty);
 
-
         // FIXME: non-ideal clone.
         let mut image = picker.new_resize_protocol(self.png_data.clone());
         let container = Block::new();
         let widget = StatefulImage::default();
         let container_area = container.inner(area);
+
 
         Widget::render(container, area, buf);
         StatefulWidget::render(widget, container_area, buf, &mut image);

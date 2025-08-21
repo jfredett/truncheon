@@ -113,13 +113,12 @@ impl Tui {
         self.terminal.clear()?;
 
         let tick_rate = Duration::from_secs_f64(self.tick_rate);
-        let frame_rate = Duration::from_secs_f64(1.0 / self.frame_rate);
+        let frame_rate = Duration::from_secs_f64(self.frame_rate);
         let mut tick_interval = time::interval(tick_rate);
         let mut frame_interval = time::interval(frame_rate);
 
         let mut event_stream = crossterm::event::EventStream::new();
 
-        // your existing tick + frame intervals here...
         loop {
             tokio::select! {
                 _tick = tick_interval.tick() => {
@@ -134,7 +133,6 @@ impl Tui {
                 }
 
                 Some(Ok(event)) = event_stream.next() => {
-                    tracing::trace!("event caught: {:?}", event);
                     if let Err(e) = self.handle_event(event).await {
                         tracing::error!("Failed to handle event: {:?}", e);
                         return Err(format!("Failed to handle event: {:?}", e).into());
@@ -168,8 +166,11 @@ impl Tui {
             Message::Noop => {},
             Message::Quit => { return Ok(UpdateCommand::Quit) },
             Message::Tick => {
-                let mut guard = self.app.write().await;
-                guard.update().await;
+                let app = self.app.clone();
+                tokio::task::spawn(async move {
+                    let mut guard = app.write().await;
+                    guard.update().await;
+                });
             },
             Message::Render => {
                 self.view().await?;

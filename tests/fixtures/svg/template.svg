@@ -1,7 +1,7 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 
 <!-- width/height need to be pulled from (tera?) rendering context, probably provided by the SVG widget -->
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{{ width }}" height="{{ height }}" viewBox="100 0 500 500">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{{ width }}" height="{{ height }}" viewBox="0 0 {{ width }} {{ height }}">
     <!-- the height/width and x/y should be dynamic -->
     <image preserverAspectRatio="none" x="0" y="0" height="224" width="194" xlink:href="./tests/fixtures/images/hex1.webp" />
     <image preserverAspectRatio="none" x="74" y="43" height="224" width="194" xlink:href="./tests/fixtures/images/hex1.webp" />
@@ -11,5 +11,5 @@
     <rect x="0" y="0" width="100%" height="100%" stroke="#ff0000" fill-opacity="0%" />
 
     <!-- x/y offsets are viewbox relative as well, it does not necessarily anchor to the edge of the parent widget -->
-    <rect x="-100" y="0" width="{{ width }}" height="{{ height }}" stroke="#ffffff" fill-opacity="0%" />
+    <rect x="0" y="0" width="{{ width }}" height="{{ height }}" stroke="#ffffff" fill-opacity="0%" />
 </svg>

@@ -58,14 +58,10 @@ impl StatefulWidget for &SVG {
     type State = SVGTemplate;
 
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer, _state: &mut Self::State) {
-        // FIXME: this _def_ shouldn't happen in here
-        let picker = if cfg!(test) {
-            // avoids an issue during testing by fixing the fontsize, normally this is unset for
-            // the test
-            Picker::from_fontsize((8, 12))
-        } else {
-            Picker::from_query_stdio().unwrap_or(Picker::from_fontsize((8,12)))
-        };
+        // TODO: Make this support other terminals?
+        let mut picker = Picker::from_fontsize((8,12));
+        picker.set_protocol_type(ratatui_image::picker::ProtocolType::Kitty);
+
 
         // FIXME: non-ideal clone.
         let mut image = picker.new_resize_protocol(self.png_data.clone());
@@ -73,7 +69,6 @@ impl StatefulWidget for &SVG {
         let widget = StatefulImage::default();
         let container_area = container.inner(area);
 
-        tracing::info!("Rendering to ratatui screen");
         Widget::render(container, area, buf);
         StatefulWidget::render(widget, container_area, buf, &mut image);
     }

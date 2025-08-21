@@ -12,7 +12,6 @@ pub mod util;
 #[derive(Parser)]
 #[command(version, about, long_about=None)]
 struct Options {
-    headless: Option<bool>
 }
 
 #[tokio::main]

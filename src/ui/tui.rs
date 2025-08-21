@@ -7,11 +7,8 @@ use ratatui::crossterm::event::{
     DisableMouseCapture, EnableMouseCapture, Event,
 };
 use ratatui::crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
-use ratatui::layout::{Constraint, Direction, Layout};
-use ratatui::text::Text;
-use ratatui::widgets::{Block, Borders, Paragraph};
 use ratatui::{crossterm, Terminal};
-use ratatui_image::picker::Picker;
+use tokio_stream::StreamExt;
 use tui_logger::{LevelFilter, TuiLoggerFile, TuiLoggerLevelOutput};
 use std::env;
 use std::sync::Arc;
@@ -99,12 +96,10 @@ impl Tui {
         dir.push("truncheon.log");
         let file_options = TuiLoggerFile::new(dir.to_str().unwrap())
             .output_level(Some(TuiLoggerLevelOutput::Abbreviated))
-            .output_file(false)
+            .output_file(true)
             .output_separator(':');
 
-        eprintln!("dir: {}", &dir.display());
         tui_logger::set_log_file(file_options);
-
 
         // TODO: Set target dynamically as well
         tracing::debug!(target:"truncheon::ui", "Logging to {}", dir.to_str().unwrap());
@@ -112,51 +107,48 @@ impl Tui {
         // FIXME: A bunch of this should probably live in like, an `init` function on app.
 
         self.enter()?;
+        assert!(crossterm::terminal::is_raw_mode_enabled()?, "Raw mode not enabled!");
+
         tracing::debug!(target:"truncheon::ui", "Entered terminal");
         self.terminal.clear()?;
 
-        let tick_rate = Duration::from_secs_f64(1.0 / self.tick_rate);
+        let tick_rate = Duration::from_secs_f64(self.tick_rate);
         let frame_rate = Duration::from_secs_f64(1.0 / self.frame_rate);
         let mut tick_interval = time::interval(tick_rate);
         let mut frame_interval = time::interval(frame_rate);
 
+        let mut event_stream = crossterm::event::EventStream::new();
+
+        // your existing tick + frame intervals here...
         loop {
             tokio::select! {
                 _tick = tick_interval.tick() => {
-                    tracing::trace!("tick");
                     if let Err(e) = self.event_tx.send(Message::Tick) {
                         return Err(format!("Failed to tick: {:?}", e).into());
                     }
                 }
                 _frame = frame_interval.tick() => {
-                    tracing::trace!("frame");
                     if let Err(e) = self.event_tx.send(Message::Render) {
                         return Err(format!("Failed to render frame: {:?}", e).into());
                     }
                 }
+
+                Some(Ok(event)) = event_stream.next() => {
+                    tracing::trace!("event caught: {:?}", event);
+                    if let Err(e) = self.handle_event(event).await {
+                        tracing::error!("Failed to handle event: {:?}", e);
+                        return Err(format!("Failed to handle event: {:?}", e).into());
+                    }
+                }
+
+                // Meta events (call to quit, etc).
                 Some(message) = self.event_rx.recv() => {
-                    tracing::trace!("event");
                     match self.update(message).await? {
                         UpdateCommand::Quit => return {
                             self.exit()?;
                             Ok(())
                         },
                         UpdateCommand::None => continue,
-                    }
-                }
-                Ok(ready) = tokio::task::spawn_blocking(|| crossterm::event::poll(Duration::from_millis(100))) => {
-                    tracing::trace!("poll");
-                    match ready {
-                        Ok(true) => {
-                            let event = crossterm::event::read()?;
-                            if let Err(e) = self.handle_event(event).await {
-                                return Err(format!("Failed to handle event: {:?}", e).into());
-                            }
-                        }
-                        Ok(false) => continue,
-                        Err(e) => {
-                            return Err(format!("Failed to poll for events: {:?}", e).into());
-                        }
                     }
                 }
             }
@@ -176,13 +168,10 @@ impl Tui {
             Message::Noop => {},
             Message::Quit => { return Ok(UpdateCommand::Quit) },
             Message::Tick => {
-                tracing::info!("Updating state");
                 let mut guard = self.app.write().await;
                 guard.update().await;
-                drop(guard);
             },
             Message::Render => {
-                tracing::info!("Rendering frame");
                 self.view().await?;
             },
         }
@@ -191,47 +180,23 @@ impl Tui {
     }
 
     async fn view(&mut self) -> Result<()> {
-        // let counter : isize = std::random::random();
-        // self.terminal.draw(|f| {
-        //     let size = f.size();
-        //     let chunks = Layout::default()
-        //         .direction(Direction::Vertical)
-        //         .constraints([Constraint::Min(1)].as_ref())
-        //         .split(size);
-
-        //     let block = Block::default().title("Hello").borders(Borders::ALL);
-        //     let paragraph = Paragraph::new(Text::raw(format!("This is a test {}", counter))).block(block);
-        //     f.render_widget(paragraph, chunks[0]);
-        // })?;
-        // Ok(())
-
-
         // BUG: This picker shit is killing the party.
-        let picker = if cfg!(test) {
-            // avoids an issue during testing by fixing the fontsize, normally this is unset for
-            // the test
-            Picker::from_fontsize((7, 12))
-        } else {
-            Picker::from_query_stdio().unwrap_or(Picker::from_fontsize((8,12)))
-        };
+        // let picker = if cfg!(test) {
+        //     // avoids an issue during testing by fixing the fontsize, normally this is unset for
+        //     // the test
+        //     Picker::from_fontsize((7, 12))
+        // } else {
+        //     Picker::from_query_stdio().unwrap_or(Picker::from_fontsize((8,12)))
+        // };
 
-        let shape = FrameShape {
-            terminal_size: self.terminal.size().map(|s| (s.width, s.height))?,
-            font_size: picker.font_size()
-        };
 
         let app = self.app.read().await;
         self.terminal.draw(|f| {
-            app.render(f, &shape)
+            app.render(f)
         })?;
 
         Ok(())
     }
-}
-
-pub struct FrameShape {
-    pub terminal_size: (u16, u16),
-    pub font_size: (u16, u16)
 }
 
 impl Drop for Tui {

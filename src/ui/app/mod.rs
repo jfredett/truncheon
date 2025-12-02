@@ -7,7 +7,7 @@ use tui_logger::{LevelFilter, TuiLoggerLevelOutput, TuiLoggerSmartWidget, TuiWid
 
 use lazy_static::lazy_static;
 
-use crate::ui::{tui::Message, widgets::{hexmap::Hexmap, placeholder::Placeholder, svg::{SVGTemplate, SVG}}};
+use crate::{ui::{tui::Message, widgets::{hexmap::Hexmap, placeholder::Placeholder, svg::{SVGTemplate, SVG}}}, util::options::Parameters};
 
 enum Mode {
     Insert,
@@ -19,6 +19,7 @@ pub struct UI {
     // layout: HashMap<String, Rect> // this gets async updated with the current layout whenever a resize event occurs.
     // UI
     mode: Mode,
+    parameters: Parameters,
     // NOTE: the update function is going to be used to render the SVG in the background, so I need
     // to remember the current Frame's area so I can grab the dimensions of the thing without
     // having the thing. This means that there may be a race when resizing, I think this could be
@@ -40,7 +41,7 @@ impl Debug for UI {
 
 
 impl UI {
-    pub fn new() -> Self {
+    pub fn new(p: &Parameters) -> Self {
         Self {
             flags: HashMap::new(),
             mode: Mode::Command,
@@ -49,7 +50,8 @@ impl UI {
             // BUG: probably this should be set by something other than just the resize. Or maybe I
             // should just fire an initial resize somehow? results in a no-first-render bug.
             frame_area: None,
-            layout: HashMap::new()
+            layout: HashMap::new(),
+            parameters: Parameters::default()
         }
     }
 
@@ -160,7 +162,7 @@ impl UI {
         self.build_layout();
         // FIXME: This is also non-ideal duplication. I suppose I may want to swap out svgs during an
         // update, but this doesn't feel great as is
-        self.player_map.update(self.layout["player_map_slice"], &mut SVGTemplate::from_file(Path::new("./tests/fixtures/svg/template.svg"))).await;
+        self.player_map.update(self.layout["player_map_slice"], &mut SVGTemplate::from_file(Path::new("./tests/fixtures/svg/template.svg")), &self.parameters).await;
     }
 
     fn tui_logger_widget(&self) -> TuiLoggerSmartWidget {

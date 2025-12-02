@@ -8,13 +8,13 @@ mod tui;
 
 use app::UI;
 
-use crate::ui::tui::Tui;
+use crate::{ui::tui::Tui, util::options::Parameters};
 
 
-pub async fn run() -> Result<(), Box<dyn Error>> {
-    let app = Arc::new(RwLock::new(UI::new()));
-    let mut tui = Tui::new(app.clone(), 1.0 / 10.0, 5.0).unwrap();
-    tui.run().await?;
+pub async fn run(p: &Parameters) -> Result<(), Box<dyn Error>> {
+    let app = Arc::new(RwLock::new(UI::new(p)));
+    let mut tui = Tui::new(app.clone(), 1.0 / 10.0, 1.0).unwrap();
+    tui.run(p).await?;
 
     Ok(())
 }

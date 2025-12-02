@@ -19,7 +19,9 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::time;
 
 use crate::ui::app::UI;
+use crate::util::options::Parameters;
 
+//FIXME: This is duped in image_renderer.rs, extract.
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -78,13 +80,15 @@ impl Tui {
         Ok(())
     }
 
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn run(&mut self, p: &Parameters) -> Result<()> {
         use tracing_subscriber::prelude::*;
 
         // Set up the Tracing layer
         tracing_subscriber::registry()
             .with(tui_logger::TuiTracingSubscriberLayer)
+            .with(console_subscriber::spawn())
             .init();
+
 
         // Set the log files
         tui_logger::init_logger(LevelFilter::Trace)?;
@@ -181,16 +185,6 @@ impl Tui {
     }
 
     async fn view(&mut self) -> Result<()> {
-        // BUG: This picker shit is killing the party.
-        // let picker = if cfg!(test) {
-        //     // avoids an issue during testing by fixing the fontsize, normally this is unset for
-        //     // the test
-        //     Picker::from_fontsize((7, 12))
-        // } else {
-        //     Picker::from_query_stdio().unwrap_or(Picker::from_fontsize((8,12)))
-        // };
-
-
         let app = self.app.read().await;
         self.terminal.draw(|f| {
             app.render(f)

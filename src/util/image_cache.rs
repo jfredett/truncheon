@@ -13,10 +13,6 @@ impl ImageCache {
     pub fn get(&self, path: &std::path::Path) -> Option<Image> {
         let cache = self.content.read().unwrap();
         let img_path = fs::canonicalize(path).expect("File not found");
-
-        tracing::info!("Cache keys are {:?}", cache);
-        tracing::info!("Checking cache for {}", img_path.display());
-
         cache.get(&img_path).cloned()
     }
 
@@ -36,7 +32,6 @@ impl ImageCache {
             return Some(x)
         }
 
-        tracing::info!("looking at {}", img_path.display());
         let image_data = fs::read(&img_path).expect("Failed to read");
         let len = image_data.len();
 

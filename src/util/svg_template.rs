@@ -47,9 +47,7 @@ impl SVGTemplate {
 
     pub fn render(&self) -> String {
         let result = Tera::one_off(&self.content, &self.context, false);
-        tracing::info!("{:?}", &result);
         result.unwrap()
-
 
         // The pipeline:
         //

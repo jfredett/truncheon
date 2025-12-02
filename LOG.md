@@ -492,3 +492,11 @@ and accrue details on what players are doing as they do it.
 I think I'm going to switch to using Bevy with a Ratatui frontend. I still want this to be usable via CLI, I still want
 it to integrate with Foundry, though I'm less concerned with the SVG output-based approach and more interested in the
 already existing bevy_ratatui and bevy_ratatui_camera, which I think cover my needs nicely.
+
+# 2-DEC-2025
+
+## 1220
+
+I'm working on getting everything organized. I decided to just drop the current state into a commit, and then start
+cutting through things till I have something functional again. I'm going to rip out all the SVG stuff after that commit
+as I don't intend to use it, and I think the more I pare down the better time I'm going to have.

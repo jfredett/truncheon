@@ -13,8 +13,8 @@ fn main() {
     let frame_time = std::time::Duration::from_secs_f32(1. / 60.);
 
     App::new()
-        .add_plugins(MinimalPlugins.set(ScheduleRunnerPlugin::run_loop(frame_time)))
         .add_plugins(RatatuiPlugins::default())
+        .add_plugins(ScheduleRunnerPlugin::run_loop(frame_time))
         .add_systems(Update, draw_system)
         .run();
 }

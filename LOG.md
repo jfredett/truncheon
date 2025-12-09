@@ -500,3 +500,37 @@ already existing bevy_ratatui and bevy_ratatui_camera, which I think cover my ne
 I'm working on getting everything organized. I decided to just drop the current state into a commit, and then start
 cutting through things till I have something functional again. I'm going to rip out all the SVG stuff after that commit
 as I don't intend to use it, and I think the more I pare down the better time I'm going to have.
+
+# 4-DEC-2025
+
+## 1457
+
+Feeling a bit frustrated trying to cajole `bevy_ratatui_camera` into `ratatui_image` and get something sensible to pop
+out. I suspect many things, but I've also been thinking a bit about how to approach this if I can't get it working at
+the CLI level. In particular, getting it to run in a browser is appealing from a delivery perspective, it would be
+significantly simpler to embed it as a WebGL/WSGL + WASM binary, at which point I could ostensibly have hot-reloading as
+well; it minimizes the testability to some extent (`insta` probably won't work), but it would mean I could just use
+`bevy` as intended, rather than trying to force it into a `ratatui_image` block.
+
+Another alternative is to move development to be directly on dragon rather than over SSH. I like the idea of trying to
+get something that uses kitty's image protocol to do real 'graphics' over SSH, but I also just want the thing to work so
+I can get on with the actual point of this project.
+
+# 8-DEC-2025
+
+## 1419
+
+Fighting with nixos and dioxus and bevy and friends. Makes me think of building a VM or container for just dev. NixOS is
+a fantastic thing for static environments, but it's very frustrating to use in a dev environment.
+
+An Arch box w/ home-manager may be in the future.
+
+
+# 9-DEC-2025
+
+## 1136
+
+Got logging and the picker updating better, still having trouble with the camera widget, likely down to not
+understanding exactly the scope of the 'strategy' system that BRC is using.
+
+

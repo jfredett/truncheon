@@ -1,98 +1,112 @@
 {
-    inputs = {
-        nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-        fenix.url = "github:nix-community/fenix";
-        devshell.url = "github:numtide/devshell";
-        flake-parts.url = "github:hercules-ci/flake-parts";
+    description =
+        "A flake using nix-community's fenix wrapped with bevy-flake.";
 
-        rust-manifest = {
-            url = "https://static.rust-lang.org/dist/2025-11-10/channel-rust-nightly.toml";
-            flake = false;
+    inputs = {
+        nixpkgs.url = "nixpkgs/nixos-unstable";
+        bevy-flake = {
+            url = "github:swagtop/bevy-flake?ref=dev";
+            inputs.nixpkgs.follows = "nixpkgs";
+        };
+        fenix = {
+            url = "github:nix-community/fenix";
+            inputs.nixpkgs.follows = "nixpkgs";
         };
     };
 
-    outputs = { self, nixpkgs, fenix, rust-manifest, devshell, flake-parts, ... } @ inputs:
-        flake-parts.lib.mkFlake { inherit inputs; } {
-            imports = [
-                devshell.flakeModule
-            ];
+    outputs = { nixpkgs, bevy-flake, fenix, ... }: 
+        let
+            bf = bevy-flake.configure (
+                { pkgs, default, ... }:
+                {
+                    src = ./.;
+                    targetEnvironments = default.targetEnvironments // {
+                        "wasm32-unknown-unknown" = {};
+                    };
+                    rustToolchainFor =
+                        targets:
+                        let
+                            fx = fenix.packages.${pkgs.stdenv.hostPlatform.system};
+                            channel = "latest"; # For nightly, use "latest".
+                        in
+                            fx.combine (
+                                [ fx.${channel}.toolchain ] ++ map (target: fx.targets.${target}.${channel}.rust-std) targets
+                            );
+                }
+            );
 
-            systems = [
-                "x86_64-linux"
-            ];
+        in {
+            inherit (bf) packages formatter;
 
-            perSystem = { pkgs, system, ... }: let
-                rustpkg = (fenix.packages.${system}.fromManifestFile rust-manifest).completeToolchain;
-                deps = with pkgs; rec {
-                    bevy_dev = [
-                            vulkan-loader
-                            xorg.libX11
-                            xorg.libXi
-                            xorg.libXcursor
-                            libxkbcommon
+            devShells = bf.eachSystem (system:
+                let
+                    pkgs = import nixpkgs { inherit system; };
+                    deps = with pkgs; rec {
+                        dev = [
+                            # General stuff
+                            bacon
+                            cloc
+                            gnuplot
+                            imhex
+                            perf
+                            perf-tools
+                            plantuml
+                            graphviz
+                            timg
+                            # Bevy stuff
+                            alsa-lib-with-plugins
                             alsa-lib-with-plugins.dev
-                            openssl.dev
-                            wayland.dev
-                            udev.dev
                             libudev-zero
-                    ];
-                    bevy = [
-                        alsa-lib-with-plugins
-                        libudev-zero
-                        libxkbcommon
-                        pkg-config
-                        vulkan-loader
-                        vulkan-tools
-                        wayland
-                        xorg.libX11
-                        xorg.libXcursor
-                        xorg.libXi
-                        xorg.libXrandr
-                        systemd.dev
-                    ];
-                    dev = [
-                        bacon
-                        cloc
-                        gnuplot
-                        imhex
-                        perf
-                        perf-tools
-                        plantuml
-                        timg
-                    ] ++ ci;
-                    ci = [
-                        cargo-insta
-                        cargo-llvm-cov
-                        cargo-mutants
-                        cargo-nextest
-                        cargo-udeps
-                        clang
-                        just
-                        libcxx
-                        mold
-                        rustpkg
-                    ] ++ bevy;
-                };
-            in {
-                packages = {
-                    ci = pkgs.writeShellApplication {
-                        name = "ci";
-                        runtimeInputs = deps.ci;
-                        text = /* bash */ ''
+                            libxkbcommon
+                            openssl
+                            openssl.dev
+                            pkg-config
+                            systemd.dev
+                            udev
+                            udev.dev
+                            vulkan-loader
+                            vulkan-tools
+                            wayland
+                            wayland.dev
+                            xorg.libX11
+                            xorg.libXcursor
+                            xorg.libXi
+                            xorg.libXrandr
+                        ] ++ ci;
+                        ci = [
+                            cargo-insta
+                            cargo-llvm-cov
+                            cargo-mutants
+                            cargo-nextest
+                            cargo-udeps
+                            clang
+                            just
+                            libcxx
+                            mold
+                        ];
+                    };
+                in {
+                    packages = {
+                        ci = pkgs.writeShellApplication {
+                            name = "ci";
+                            runtimeInputs = deps.ci;
+                            text = /* bash */ ''
                             just ci
                             '';
+                        };
                     };
-                };
-                devshells.default = with builtins; {
-                    motd = "Hexy and we know it.";
-                    packages = deps.dev;
-                    env = [
-                        { name = "LD_LIBRARY_PATH"; value = pkgs.lib.makeLibraryPath deps.bevy_dev; }
-                        { name = "RUST_SRC_PATH"; value = head (filter (x: null != (match ".*rust-src.*" x)) rustpkg.paths); }
-                        { name = "PKG_CONFIG_PATH"; value = pkgs.lib.makeSearchPath "lib/pkgconfig" deps.bevy_dev; }
-                        { name = "RUSTFLAGS"; value = "-C link-arg=-fuse-ld=${pkgs.mold}/bin/mold"; }
-                    ];
-                };
-            };
+                    default = pkgs.mkShell {
+                        name = "truncheon";
+                        packages = [
+                            bf.packages.${system}.rust-toolchain
+                            bf.packages.${system}.dioxus-cli
+                            bf.packages.${system}.bevy-cli
+                        ];
+                        buildInputs = deps.dev;
+                        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath deps.dev;
+                        PKG_CONFIG_PATH = pkgs.lib.makeSearchPath "lib/pkgconfig" deps.dev;
+                        RUSTFLAGS = "-C link-arg=-fuse-ld=${pkgs.mold}/bin/mold";
+                    };
+                });
         };
 }

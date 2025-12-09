@@ -46,7 +46,7 @@ impl Placeholder {
         self
     }
 
-    fn calculate_text(&self) -> Paragraph {
+    fn calculate_text(&self) -> Paragraph<'_> {
         let text = [self.text].repeat(self.height as usize).join("\n");
         Paragraph::new(text)
             .style(self.style)

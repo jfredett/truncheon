@@ -1,5 +1,5 @@
 use ratatui::widgets::{canvas::{Canvas, Context}, Block, StatefulWidget, Widget};
-use truncheon::hex::{coord::{axial, pixel}, field::Field};
+use crate::hex::{coord::{axial, pixel}, field::Field};
 
 #[derive(Debug, Clone)]
 pub struct Hexmap {

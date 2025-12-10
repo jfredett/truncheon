@@ -526,3 +526,11 @@ a fantastic thing for static environments, but it's very frustrating to use in a
 An Arch box w/ home-manager may be in the future.
 
 
+# 9-DEC-2025
+
+## 1136
+
+Got logging and the picker updating better, still having trouble with the camera widget, likely down to not
+understanding exactly the scope of the 'strategy' system that BRC is using.
+
+

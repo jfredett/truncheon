@@ -19,20 +19,22 @@ pub use tracing_test;
 
 use tui_logger::{LevelFilter, TuiLoggerWidget};
 use tracing_subscriber::{prelude::*, registry::Registry};
-use tui_logger::TuiTracingSubscriberLayer;
 
-fn main() {
+fn prep() {
+    // set up dioxus
     dioxus_devtools::connect_subsecond();
 
-
-    // set up TUI Logger
+    // set up TUI Logger, needs to be done before the app starts.
     tui_logger::init_logger(LevelFilter::Trace).unwrap();
-    tui_logger::set_default_level(LevelFilter::Trace);
+    tui_logger::set_default_level(LevelFilter::Info);
 
     let subscriber = Registry::default().with(tui_logger::TuiTracingSubscriberLayer);
     bevy::log::tracing::subscriber::set_global_default(subscriber)
         .expect("Failed to install tracing subscriber");
+}
 
+fn main() {
+    prep();
 
     // let mut parameters = Parameters::default();
     let frame_time = std::time::Duration::from_secs_f32(1. / 60.);
@@ -47,86 +49,100 @@ fn main() {
         .add_plugins(ScheduleRunnerPlugin::run_loop(frame_time))
         .add_plugins(RatatuiPlugins::default())
         .add_plugins(RatatuiCameraPlugin)
-        // .insert_resource(ClearColor(bevy::prelude::Color::BLACK))
-        // .insert_resource(UI::default())
         .add_systems(Startup, (init_picker, init_scene, init_ratatui_camera))
         .add_systems(PreUpdate, refresh_picker)
-        .add_systems(Update, draw_system)
+        .add_systems(Update, (draw_system, zoom_camera).chain())
         .run();
 }
 
-// #[derive(Default, Resource)]
-// struct UI(truncheon::ui::UI);
-//
 
-fn init_ratatui_camera(mut commands: Commands) {
-    commands.spawn((
-        Camera3d::default(),
-        RatatuiCamera::default(),
-    ));
+#[derive(Component)]
+#[require(Camera2d)]
+#[require(RatatuiCamera)]
+struct MainCamera;
+
+fn zoom_camera(
+    mut camera: Single<&mut Transform, With<MainCamera>>,
+    time: Res<Time>,
+) {
+    // info!("Translating!");
+    let direction = Vec3::new(0.0, 0.0, 1.0);
+    // camera.translation = camera.translation.lerp(direction, time.delta_secs() * 2.0);
 }
 
+fn init_ratatui_camera(mut commands: Commands) {
+    commands.spawn(MainCamera);
+}
 
 #[derive(Deref, Resource)]
 struct PickerResource(Picker);
 
 fn init_picker(mut commands: Commands) {
-    trace!("Here!");
-    // need to do this before starting the render?
-    let mut picker = Picker::from_query_stdio().unwrap();
-//    picker.set_protocol_type(ratatui_image::picker::ProtocolType::Kitty);
-    info!("picker: {:?}", picker.protocol_type());
+    let picker = Picker::from_query_stdio().unwrap();
     commands.insert_resource(PickerResource(picker));
 }
 
 fn init_scene(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut asset_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
 ) {
     let image = asset_server.load("hex/hex1.png");
 
     commands.spawn(Sprite {
         image,
+        image_mode: SpriteImageMode::Tiled {
+                tile_x: true,
+                tile_y: true,
+                stretch_value: 0.5, // The image will tile every 128px
+        },
+        custom_size: Some(Vec2::new(248.0, 194.0)),
         ..default()
     });
 }
 
 fn refresh_picker(
     mut commands: Commands,
-    mut picker: ResMut<PickerResource>
+    picker: ResMut<PickerResource>
 ) {
-    info!("Picker before update: {:?}", picker.font_size());
+    // FIXME: Idk if I'm supposed to re-insert a resource to update it, or use interior mutability
+    // somehow.
     commands.insert_resource(PickerResource(Picker::from_query_stdio().unwrap()));
 }
 
 fn draw_system(
     mut context: ResMut<RatatuiContext>,
-    camera_widget: Single<&mut RatatuiCameraWidget>,
+    mut camera_widget: Single<&mut RatatuiCameraWidget>,
     picker: Res<PickerResource>
 ) -> Result {
     context.draw(|frame| {
         let layout = Layout::new(
             Direction::Vertical,
-            [Constraint::Percentage(33), Constraint::Percentage(33), Constraint::Fill(1)],
+            [Constraint::Percentage(75), Constraint::Fill(1)],
         ).split(frame.area());
 
-        let reference_widget = StatefulImage::default().resize(Resize::Crop(None));
-        let ratatui_image_widget = StatefulImage::default().resize(Resize::Crop(None));
+        let (font_w, font_h) = picker.font_size();
 
-        let mut camera_image = picker.new_resize_protocol(camera_widget.camera_image.clone());
+        // this is resizing the image to the layout space, which is measured in characters (I
+        // think), need it in pixels for the camera.
+        let new_area = ratatui::prelude::Rect {
+            x: layout[1].x * font_w,
+            y: layout[1].y * font_h,
+            width: (layout[1].width * font_w),
+            height: (layout[1].height * font_h)
+        };
+        let (camera_image, _, _) = camera_widget.resize_images_to_area(new_area);
+        let mut camera_image = picker.new_resize_protocol(camera_image);
 
-        let ref_image = image::ImageReader::open("./assets/hex/hex1.png").unwrap().decode().unwrap();
-        let mut ref_image = picker.new_resize_protocol(ref_image);
+        // FIXME: this should probably be a component?
+        // TODO: Wrap a border on the thing
+        let ratatui_image_widget = StatefulImage::default();
+        ratatui_image_widget.render(layout[0], frame.buffer_mut(), &mut camera_image);
 
-        reference_widget.render(layout[0], frame.buffer_mut(), &mut ref_image);
-        ratatui_image_widget.render(layout[1], frame.buffer_mut(), &mut camera_image);
         frame.render_widget(
             TuiLoggerWidget::default()
                 .block(Block::bordered())
                 .style(Style::default().bg(ratatui::style::Color::Reset)),
-            layout[2]);
+            layout[1]);
     })?;
 
     Ok(())

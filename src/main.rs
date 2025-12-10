@@ -58,20 +58,23 @@ fn main() {
 
 #[derive(Component)]
 #[require(Camera2d)]
-#[require(RatatuiCamera)]
 struct MainCamera;
 
 fn zoom_camera(
     mut camera: Single<&mut Transform, With<MainCamera>>,
     time: Res<Time>,
 ) {
-    // info!("Translating!");
+    info!("Translating!");
     let direction = Vec3::new(0.0, 0.0, 1.0);
-    // camera.translation = camera.translation.lerp(direction, time.delta_secs() * 2.0);
+    camera.translation = camera.translation.lerp(direction, time.delta_secs() * 2.0);
 }
 
 fn init_ratatui_camera(mut commands: Commands) {
     commands.spawn(MainCamera);
+    commands.spawn((
+        Camera2d::default(),
+        RatatuiCamera::default(),
+    ));
 }
 
 #[derive(Deref, Resource)]
@@ -90,11 +93,6 @@ fn init_scene(
 
     commands.spawn(Sprite {
         image,
-        image_mode: SpriteImageMode::Tiled {
-                tile_x: true,
-                tile_y: true,
-                stretch_value: 0.5, // The image will tile every 128px
-        },
         custom_size: Some(Vec2::new(248.0, 194.0)),
         ..default()
     });
@@ -117,10 +115,21 @@ fn draw_system(
     context.draw(|frame| {
         let layout = Layout::new(
             Direction::Vertical,
-            [Constraint::Percentage(75), Constraint::Fill(1)],
+            [Constraint::Percentage(25), Constraint::Percentage(25), Constraint::Percentage(25), Constraint::Fill(1)],
         ).split(frame.area());
 
+        let reference_widget = StatefulImage::default().resize(Resize::Crop(None));
+        let ratatui_image_widget = StatefulImage::default().resize(Resize::Crop(None));
+
+        // BUG: I have no idea why the camera_image is so small, and appearing to lack my sprite in
+        // it. I would guess some part of the sizing is handled by the strategy part and since I'm
+        // bypassing it, no worky.
+
+
         let (font_w, font_h) = picker.font_size();
+        let font_ar = num::Rational32::new(font_h.into() , font_w.into());
+
+
 
         // this is resizing the image to the layout space, which is measured in characters (I
         // think), need it in pixels for the camera.
@@ -130,19 +139,35 @@ fn draw_system(
             width: (layout[1].width * font_w),
             height: (layout[1].height * font_h)
         };
+        debug!("font_size (unit=pixels): {:?}", picker.font_size());
+        debug!("font_ar (unit=none): {:#}", font_ar);
+        debug!("layout (unit=character) {:?}", layout);
+        debug!("new_area (unit=pixels) {:?}", new_area);
         let (camera_image, _, _) = camera_widget.resize_images_to_area(new_area);
         let mut camera_image = picker.new_resize_protocol(camera_image);
 
-        // FIXME: this should probably be a component?
-        // TODO: Wrap a border on the thing
-        let ratatui_image_widget = StatefulImage::default();
-        ratatui_image_widget.render(layout[0], frame.buffer_mut(), &mut camera_image);
+        let ref_image = image::ImageReader::open("./assets/hex/hex1.png").unwrap().decode().unwrap();
+        let ref_image_ar = num::Rational32::new(ref_image.width().try_into().unwrap(), ref_image.height().try_into().unwrap());
 
+        debug!("ref_image (unit=pixel)");
+        debug!("  width: {:?}", ref_image.width());
+        debug!("  height: {:?}", ref_image.height());
+        debug!("  ar: {:#}", ref_image_ar);
+
+        let mut ref_image = picker.new_resize_protocol(ref_image);
+
+        reference_widget.render(layout[0], frame.buffer_mut(), &mut ref_image);
+        ratatui_image_widget.render(layout[1], frame.buffer_mut(), &mut camera_image);
+
+        frame.render_widget(
+            &mut **camera_widget, // XXX: a true monstrosity
+            layout[2]
+        );
         frame.render_widget(
             TuiLoggerWidget::default()
                 .block(Block::bordered())
                 .style(Style::default().bg(ratatui::style::Color::Reset)),
-            layout[1]);
+            layout[3]);
     })?;
 
     Ok(())

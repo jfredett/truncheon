@@ -1,7 +1,5 @@
 use std::{ops::{Add, AddAssign, Sub, SubAssign}, str::FromStr};
 
-use ratatui::{style::Color, widgets::canvas::Line};
-
 use crate::hex::coord::pixel;
 
 
@@ -52,14 +50,6 @@ impl Point {
 
     pub fn x(&self) -> f64 {
         self.x
-    }
-
-    pub fn line(p1: Point, p2: Point) -> Line {
-        Line {
-            x1: p1.x, y1: p1.y,
-            x2: p2.x, y2: p2.y,
-            color: Color::Red
-        }
     }
 }
 

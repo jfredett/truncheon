@@ -26,7 +26,7 @@ fn prep() {
 
     // set up TUI Logger, needs to be done before the app starts.
     tui_logger::init_logger(LevelFilter::Trace).unwrap();
-    tui_logger::set_default_level(LevelFilter::Info);
+    tui_logger::set_default_level(LevelFilter::Debug);
 
     let subscriber = Registry::default().with(tui_logger::TuiTracingSubscriberLayer);
     bevy::log::tracing::subscriber::set_global_default(subscriber)
@@ -49,9 +49,9 @@ fn main() {
         .add_plugins(ScheduleRunnerPlugin::run_loop(frame_time))
         .add_plugins(RatatuiPlugins::default())
         .add_plugins(RatatuiCameraPlugin)
-        .add_systems(Startup, (init_picker, init_scene, init_ratatui_camera))
+        .add_systems(Startup, (init_picker, init_scene, init_ratatui_camera).chain())
         .add_systems(PreUpdate, refresh_picker)
-        .add_systems(Update, (draw_system, zoom_out).chain())
+        .add_systems(Update, (draw_system, zoom_in).chain())
         .run();
 }
 
@@ -60,23 +60,23 @@ fn main() {
 #[require(Camera2d, RatatuiCamera)]
 struct MainCamera;
 
-fn zoom_out(
+fn zoom_in(
     mut projection: Single<&mut Projection, With<MainCamera>>,
     time: Res<Time>
 ) {
     match projection.as_mut() {
         Projection::Perspective(perspective) => {
-            perspective.fov += time.delta_secs() * 1.0;
+            perspective.fov -= time.delta_secs() * 1.0;
         },
         Projection::Orthographic(ortho) => {
             let mut log_scale = ortho.scale.ln();
-            log_scale += 0.5 * time.delta_secs();
-            if log_scale > 10.0 {
-                log_scale = 0.001;
+            log_scale -= 0.5 * time.delta_secs();
+            if log_scale < 0.001 {
+                log_scale = 10.;
             }
             ortho.scale = log_scale.exp();
         },
-        Projection::Custom(_) => { return; },
+        Projection::Custom(_) => {},
     }
 }
 
@@ -121,59 +121,52 @@ fn draw_system(
     context.draw(|frame| {
         let layout = Layout::new(
             Direction::Vertical,
-            [Constraint::Percentage(25), Constraint::Percentage(25), Constraint::Percentage(25), Constraint::Fill(1)],
+            [Constraint::Percentage(60), Constraint::Fill(1)],
         ).split(frame.area());
 
-        let reference_widget = StatefulImage::default().resize(Resize::Crop(None));
-        let ratatui_image_widget = StatefulImage::default().resize(Resize::Crop(None));
+        #[cfg(feature = "rti_bcr")]
+        {
+            // This attempts to route the camera_image from bevy_ratatui_camera to ratatui_image,
+            // with mixed to middling results. It works sometimes, for reasons passing
+            // understanding.
+            let ratatui_image_widget = StatefulImage::default().resize(Resize::Crop(None));
 
-        // BUG: I have no idea why the camera_image is so small, and appearing to lack my sprite in
-        // it. I would guess some part of the sizing is handled by the strategy part and since I'm
-        // bypassing it, no worky.
+            // BUG: I have no idea why the camera_image is so small, and appearing to lack my sprite in
+            // it. I would guess some part of the sizing is handled by the strategy part and since I'm
+            // bypassing it, no worky.
 
+            let (font_w, font_h) = picker.font_size();
+            let font_ar = num::Rational32::new(font_h.into() , font_w.into());
 
-        let (font_w, font_h) = picker.font_size();
-        let font_ar = num::Rational32::new(font_h.into() , font_w.into());
+            // this is resizing the image to the layout space, which is measured in characters (I
+            // think), need it in pixels for the camera.
+            let new_area = ratatui::prelude::Rect {
+                x: layout[0].x * font_w,
+                y: layout[0].y * font_h,
+                width: (layout[0].width * font_w),
+                height: (layout[0].height * font_h)
+            };
 
+            let (camera_image, _, _) = camera_widget.resize_images_to_area(new_area);
+            let mut camera_image = picker.new_resize_protocol(camera_image);
 
+            ratatui_image_widget.render(layout[0], frame.buffer_mut(), &mut camera_image);
 
-        // this is resizing the image to the layout space, which is measured in characters (I
-        // think), need it in pixels for the camera.
-        let new_area = ratatui::prelude::Rect {
-            x: layout[1].x * font_w,
-            y: layout[1].y * font_h,
-            width: (layout[1].width * font_w),
-            height: (layout[1].height * font_h)
-        };
-        debug!("font_size (unit=pixels): {:?}", picker.font_size());
-        debug!("font_ar (unit=none): {:#}", font_ar);
-        debug!("layout (unit=character) {:?}", layout);
-        debug!("new_area (unit=pixels) {:?}", new_area);
-        let (camera_image, _, _) = camera_widget.resize_images_to_area(new_area);
-        let mut camera_image = picker.new_resize_protocol(camera_image);
+        }
 
-        let ref_image = image::ImageReader::open("./assets/hex/hex1.png").unwrap().decode().unwrap();
-        let ref_image_ar = num::Rational32::new(ref_image.width().try_into().unwrap(), ref_image.height().try_into().unwrap());
+        #[cfg(feature = "bcr")]
+        {
+            frame.render_widget(
+                &mut **camera_widget,
+                layout[0]
+            );
+        }
 
-        debug!("ref_image (unit=pixel)");
-        debug!("  width: {:?}", ref_image.width());
-        debug!("  height: {:?}", ref_image.height());
-        debug!("  ar: {:#}", ref_image_ar);
-
-        let mut ref_image = picker.new_resize_protocol(ref_image);
-
-        reference_widget.render(layout[0], frame.buffer_mut(), &mut ref_image);
-        ratatui_image_widget.render(layout[1], frame.buffer_mut(), &mut camera_image);
-
-        frame.render_widget(
-            &mut **camera_widget, // XXX: a true monstrosity
-            layout[2]
-        );
         frame.render_widget(
             TuiLoggerWidget::default()
                 .block(Block::bordered())
                 .style(Style::default().bg(ratatui::style::Color::Reset)),
-            layout[3]);
+            layout[1]);
     })?;
 
     Ok(())

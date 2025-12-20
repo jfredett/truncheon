@@ -110,3 +110,8 @@ non-uniform system that could contain both hex and depth crawls.
 
 */
 
+
+#[derive(Component)]
+struct HexLocation;
+
+

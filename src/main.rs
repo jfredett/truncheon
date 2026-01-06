@@ -125,43 +125,10 @@ fn draw_system(
             [Constraint::Percentage(60), Constraint::Fill(1)],
         ).split(frame.area());
 
-        #[cfg(feature = "rti_bcr")]
-        {
-            // This attempts to route the camera_image from bevy_ratatui_camera to ratatui_image,
-            // with mixed to middling results. It works sometimes, for reasons passing
-            // understanding.
-            let ratatui_image_widget = StatefulImage::default().resize(Resize::Crop(None));
-
-            // BUG: I have no idea why the camera_image is so small, and appearing to lack my sprite in
-            // it. I would guess some part of the sizing is handled by the strategy part and since I'm
-            // bypassing it, no worky.
-
-            let (font_w, font_h) = picker.font_size();
-            let font_ar = num::Rational32::new(font_h.into() , font_w.into());
-
-            // this is resizing the image to the layout space, which is measured in characters (I
-            // think), need it in pixels for the camera.
-            let new_area = ratatui::prelude::Rect {
-                x: layout[0].x * font_w,
-                y: layout[0].y * font_h,
-                width: (layout[0].width * font_w),
-                height: (layout[0].height * font_h)
-            };
-
-            let (camera_image, _, _) = camera_widget.resize_images_to_area(new_area);
-            let mut camera_image = picker.new_resize_protocol(camera_image);
-
-            ratatui_image_widget.render(layout[0], frame.buffer_mut(), &mut camera_image);
-
-        }
-
-        #[cfg(feature = "bcr")]
-        {
-            frame.render_widget(
-                &mut **camera_widget,
-                layout[0]
-            );
-        }
+        frame.render_widget(
+            &mut **camera_widget,
+            layout[0]
+        );
 
         frame.render_widget(
             TuiLoggerWidget::default()

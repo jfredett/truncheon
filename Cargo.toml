@@ -18,11 +18,6 @@ getrandom = { version = "0.3", features = ["wasm_js"] }
 getrandom_02 = { version = "0.2", features = ["js"], package = "getrandom" }
 wasm-bindgen = "0.2"
 
-[features]
-default = ["bcr"]
-rti_bcr = []
-bcr = []
-
 [dependencies]
 # anyhow = "1.0.99"
 # clap = { version = "4.5.42", features = ["derive"] }

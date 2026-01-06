@@ -111,7 +111,6 @@ impl UI {
     //         // Event::Mouse(_mouse_event) => todo!(),
     //         // Event::Paste(_) => todo!(),
     //     }
-
     //     Message::Noop
     // }
 

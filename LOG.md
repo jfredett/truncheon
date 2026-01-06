@@ -533,4 +533,52 @@ An Arch box w/ home-manager may be in the future.
 Got logging and the picker updating better, still having trouble with the camera widget, likely down to not
 understanding exactly the scope of the 'strategy' system that BRC is using.
 
+## 22-DEC-2025
 
+## 1144
+
+Alright, pretty much everything is 'working' now, I switched back to the standard BRC output for now, with a plan to
+replace with the 'full resolution' version in the future. For now it's good enough to proceed with the rest of things.
+
+I think the next steps are the following:
+
+1. Input/Command parsing
+2. Representing "Spaces", the first of which is probably as standard "Overlay"-based hexgrid (similar to what's on offer
+   in Foundry or R20), followed by a sparse "HexTopology" -- which stores individual hexes and their locations and will
+   (eventually) support something like WFC for generating more terrain
+3. diagnostic components rendering in the ratatui interface -- e.g., the rest of the TUI Logger widget, a proper command
+   IO widget, etc
+4. Mouse integration + logged click events.
+
+
+#2 is what I've been chipping at, but I think #1/#3 and to a lesser extent #4 are the better things to work on right
+now, as the interaction I want to have is largely command-driven.
+
+# 1-JAN-2026
+
+## 1158
+
+I've been off working on upgrades to the editor and general improvements to my workflow, but I've also been reading a
+bunch about climate modeling because I am constantly drawn towards the fun part and not the boring stuff it takes to get
+there, which is why I'm writing this instead of getting the IO widget working. I'm going to go work on the IO widget
+now, and hopefully come back and write another entry when I finish it.
+
+# 6-JAN-2026
+
+## 1337
+
+lmao funny number.
+
+I have the initial input handler more or less working, I need to commit off what I have for the image pipeline side so
+it's saved somewhere then remove it.
+
+A critical next step is building a better build/test/repeat loop. I've been sitting on this work for a while because
+testing it feels bad, lots of waiting, lots of actions-per-loop.
+
+`bevy_testing` and headless mode are probably the way to go, but it'd be cool if I can do some amount of input testing,
+maybe get insta working somehow, not sure.
+
+Hot code reloading would be nice but I don't want to fight through the ratatui component of things to get it working.
+
+I'm leaning towards refactoring the input manager to be all-bevy, then feed back to the ratatui side, but not sure if
+that makes sense yet.

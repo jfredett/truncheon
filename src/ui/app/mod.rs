@@ -7,7 +7,7 @@ use tui_logger::{LevelFilter, TuiLoggerLevelOutput, TuiLoggerSmartWidget, TuiWid
 
 use lazy_static::lazy_static;
 
-use crate::ui::widgets::{hexmap::Hexmap, placeholder::Placeholder};
+use crate::ui::widgets::{placeholder::Placeholder};
 
 #[derive(Default)]
 enum Mode {
@@ -185,7 +185,7 @@ impl UI {
 
         frame.render_widget(&Placeholder::for_section(self.layout["trail_slice"]).text("TRAIL"), self.layout["trail_slice"]);
         frame.render_widget(&Placeholder::for_section(self.layout["player_map_slice"]), self.layout["player_map_slice"]);
-        frame.render_stateful_widget(Hexmap::default(), self.layout["gm_map_slice"], &mut Field::<isize>::new());
+//        frame.render_stateful_widget(Hexmap::default(), self.layout["gm_map_slice"], &mut Field::<isize>::new());
         frame.render_widget(&Placeholder::for_section(self.layout["output_section"]).text("OUTPUT"), self.layout["output_section"]);
         frame.render_widget(&Placeholder::for_section(self.layout["input_section"]).text("> INPUT"), self.layout["input_section"]);
     }

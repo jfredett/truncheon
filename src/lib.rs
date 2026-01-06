@@ -3,7 +3,7 @@
 
 
 pub mod hex;
-// pub mod ui;
+pub mod ui;
 
 #[cfg(test)]
 #[macro_use]

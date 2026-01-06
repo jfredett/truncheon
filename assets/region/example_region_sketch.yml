@@ -1,0 +1,57 @@
+---
+
+# TODO: maybe this is a scripting language?
+#
+#
+# I think this is probably just going to be a bespoke thing to represent the existing map.
+#
+# Maybe the Topology should really be like
+#
+# Maybe these should be called 'spaces' and not regions, since I'll also need a metric on these things to judge how time
+# flows.
+#
+# OverlayTopology(Hex|Square, Origin)
+#   - Represents a map like what I have in Foundry now, an image with an overlaid grid system of some kind.
+# HexTopology, SquareTopology
+#   - Represents a hex-coordinate topology with hexes as the primary unit, a sparse tree, indexed by some coordinate
+#   system for hexes, indexes everything. Square likewise.
+# PointTopology
+#   - Represents a collection of locations connected point-to-point.
+#
+
+test_region:
+    topology:
+        topology:
+            type: Hex
+            origin: 0 # the index in locations that marks the origin
+            orientation: CW # CCW or CW for the spiral to draw around the origin, all other hexes taken one at a time
+        metric:
+            type: Unit
+            name: league
+            quantity_per_hex: 1
+    locations:
+        - Location Structure Here, no position info
+        - ...
+
+
+
+# This'd be for a point-crawl through a cave complex. The metric here is "PerConnection", meaning that we should look for
+        # 
+second_region_in_the_file:
+    topology:
+        topology:
+            type: PointTopology
+            connections:
+                - id pairs representing 1-way edges.
+        metric:
+            type: PerLocation
+    locations:
+        - Location Structure Here, no position info
+        - ...
+    connection:
+        - from: uuid
+          to: uuid
+          metric:
+            unit: minutes
+            type: Time
+        - ...

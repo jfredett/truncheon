@@ -1,0 +1,78 @@
+---
+
+# TODO: maybe this is a scripting language?
+#
+#
+# I think this is probably just going to be a bespoke thing to represent the existing map.
+#
+# Maybe the Topology should really be like
+#
+# Maybe these should be called 'spaces' and not regions, since I'll also need a metric on these things to judge how time
+# flows.
+#
+# OverlayTopology(Hex|Square, Origin)
+#   - Represents a map like what I have in Foundry now, an image with an overlaid grid system of some kind.
+# HexTopology, SquareTopology
+#   - Represents a hex-coordinate topology with hexes as the primary unit, a sparse tree, indexed by some coordinate
+#   system for hexes, indexes everything. Square likewise.
+# PointTopology
+#   - Represents a collection of locations connected point-to-point.
+#
+# locations contain a hash of string -> value? then the tileset can duck type itself into whatever info it needs?
+# coord should be held outside the location.
+#
+# So location is a Hash<String, String> (that _sucks_ can I make that smarter, maybe it's a few hashmaps with supported
+# types?)
+
+isk:
+    topology:
+        topology:
+            type: Hex
+            alignment: Flat # Flat top or pointy top
+            system: Axial
+        metric:
+            type: Unit
+            name: league
+            quantity_per_hex: 1
+    locations:
+        - terrain: Open
+          coord: "[0,0]"
+          contents:
+            - type: Space
+              name: pleasantly_finite
+            - type: Structure
+              kind: Road
+        - terrain: Forest
+          coord: "[1,0]"
+          contents: []
+        - terrain: Forest 
+          coord: "[0,1]"
+          contents: []
+        - terrain: Open
+          coord: "[-1,1]"
+          contents:
+            - type: Structure # This is maybe just a 'modifier' or something, not a location, a feature of a location
+              kind: Road
+        - terrain: Lake # should dynamically notice it's a lake edge and replace.
+          coord: "[-1,0]"
+          contents: []
+        - terrain: Lake # ibid
+          coord: "[0,-1]"
+          contents: []
+
+pleasantly_finite:
+    topology:
+        type: PointTopology
+    metric: 
+        type: Instant
+    location:
+        - name: Main Hall
+          connections:
+            - Bar
+            - Common Area
+            - Hostel
+        - name: Bar
+          connections:
+            - Main Hall
+        - ...
+

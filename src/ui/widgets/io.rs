@@ -1,6 +1,5 @@
-use bevy::prelude::*;
-use bevy_ratatui::event::KeyMessage;
-use ratatui::widgets::Widget;
+use bevy::{input::keyboard::KeyboardInput, prelude::*};
+use ratatui::{layout::{Constraint, Direction, Layout}, widgets::{Block, Borders, Paragraph, Widget}};
 
 
 #[derive(Default)]
@@ -10,8 +9,8 @@ struct Input {
 }
 
 impl Input {
-    pub fn push(&mut self, ch: char) {
-        self.buf.push(ch);
+    pub fn push(&mut self, s: &str) {
+        self.buf.push_str(s);
     }
 }
 
@@ -60,39 +59,58 @@ pub struct IOWidget {
 
 impl Plugin for IOWidget {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_keyboard_io);
+        app.add_systems(Update, handle_keyboard_io)
+           .add_systems(Startup, add_io_widget)
+           .add_message::<CommandEvent>()
+           .add_observer(log_on_execute);
     }
 }
 
+pub fn add_io_widget(
+    mut commands: Commands,
+) {
+    commands.spawn((
+        IOWidget::default(),
+        Focus
+    ));
+}
 
-impl Widget for IOWidget {
+impl Widget for &mut IOWidget {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) where Self: Sized {
-        todo!()
+        // we're given an area, we'll lay it out ourselves to what we want
+        //
+        let layout = Layout::new(
+            Direction::Vertical,
+            [Constraint::Min(1), Constraint::Length(1)]
+        ).split(area);
+        let history_section = layout[0];
+        let input_line = layout[1];
+
+        let history_block = Block::bordered().borders(Borders::TOP | Borders::LEFT | Borders::RIGHT).title("History");
+        let history_content = Paragraph::new(self.history.buf.join("\n")).block(history_block);
+
+        let input_line_block = Block::bordered().borders(Borders::LEFT | Borders::RIGHT);
+        let input_line_content = Paragraph::new(self.input.buf.clone()).block(input_line_block);
+
+        history_content.render(history_section, buf);
+        input_line_content.render(input_line, buf);
     }
 }
 
 
 /// RO Struct containing the entered command
-#[derive(Event, Deref, Clone, Debug)]
+#[derive(Message, Event, Deref, Clone, Debug)]
 pub struct CommandEvent(String);
 
 
 impl IOWidget {
-    pub fn create(
-        mut commands: Commands,
-    ) {
-        commands.spawn((
-            IOWidget::default(),
-        ));
-    }
-
     pub fn record(&mut self, cmd: String) {
         self.history.append(cmd);
     }
 
     // accept an incoming character
-    pub fn send_input_char(&mut self, ch: char) {
-        self.input.push(ch);
+    pub fn send_input(&mut self, s: &str) {
+        self.input.push(s);
     }
 
     // Send an event that signals a command has been entered.
@@ -124,7 +142,7 @@ pub fn log_on_execute(
 //
 // Eventually I'd like to have a 'ratatui modal input' plugin, that's why this is here.
 #[derive(Component)]
-struct Focus;
+pub struct Focus;
 
 // NOTE: See above
 // trait CanFocus {
@@ -136,28 +154,53 @@ struct Focus;
 //#[derive(Resource)]
 //struct CommandMode;
 
+// // FIXME: Replace with a bevy-level input handling, this is very slow, and I hope bevy's thing is
+// // better tied into the event loop.
+// pub fn handle_keyboard_io(
+//     mut commands: Commands,
+//     mut focus: Single<&mut IOWidget, With<Focus>>,
+//     mut messages: MessageReader<KeyMessage>,
+// ) {
+//     for message in messages.read() {
+//         match message.code {
+//             ratatui::crossterm::event::KeyCode::Enter => {
+//                 trace!("executing command");
+//                 focus.execute(&mut commands);
+//             },
+//             ratatui::crossterm::event::KeyCode::Char(c) => {
+//                 trace!("recording character");
+//                 focus.send_input_char(c);
+//             },
+//             _ => {}
+//         }
+//     }
+//     // capture input, find the current focused element, if the element is marked for accepting
+//     // input, send it along, unless it's `escape`, which means you should remove focus on the
+//     // focused element and place it on the CommandMode element.
+
+//     // if there is no focused element, then the keystrokes are sent to the CommandMode handler,
+//     // where they can be buffered as needed for parsing.
+// }
 
 pub fn handle_keyboard_io(
     mut commands: Commands,
+    mut keyboard_events: EventReader<KeyboardInput>,
     mut focus: Single<&mut IOWidget, With<Focus>>,
-    mut messages: MessageReader<KeyMessage>,
-    mut exit: MessageWriter<AppExit>,
 ) {
-    for message in messages.read() {
-        match message.code {
-            ratatui::crossterm::event::KeyCode::Enter => {
+    for event in keyboard_events.read() {
+        trace!("Key pressed: {:?}, logical key: {:?}", event.key_code, event.logical_key);
+        use bevy::input::keyboard::Key;
+        match &event.logical_key {
+            Key::Character(s) => {
+                trace!("recording character");
+                focus.send_input(&s.clone());
+            }
+            Key::Enter => {
+                trace!("executing command");
                 focus.execute(&mut commands);
-            },
-            ratatui::crossterm::event::KeyCode::Char(c) => {
-                focus.send_input_char(c);
-            },
+            }
             _ => {}
         }
     }
-    // capture input, find the current focused element, if the element is marked for accepting
-    // input, send it along, unless it's `escape`, which means you should remove focus on the
-    // focused element and place it on the CommandMode element.
-
-    // if there is no focused element, then the keystrokes are sent to the CommandMode handler,
-    // where they can be buffered as needed for parsing.
 }
+

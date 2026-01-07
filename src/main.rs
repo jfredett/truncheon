@@ -26,7 +26,7 @@ fn prep() {
 
     // set up TUI Logger, needs to be done before the app starts.
     tui_logger::init_logger(LevelFilter::Trace).unwrap();
-    tui_logger::set_default_level(LevelFilter::Debug);
+    tui_logger::set_default_level(LevelFilter::Trace);
 
     let subscriber = Registry::default().with(tui_logger::TuiTracingSubscriberLayer);
     bevy::log::tracing::subscriber::set_global_default(subscriber)
@@ -37,7 +37,7 @@ fn main() {
     prep();
 
     // let mut parameters = Parameters::default();
-    let frame_time = std::time::Duration::from_secs_f32(1. / 60.);
+    let frame_time = std::time::Duration::from_secs_f32(1. / 10.);
 
     App::new()
         .add_plugins(
@@ -47,12 +47,15 @@ fn main() {
         )
         .add_plugins(bevy_mod_debugdump::CommandLineArgs)
         .add_plugins(ScheduleRunnerPlugin::run_loop(frame_time))
-        .add_plugins(RatatuiPlugins::default())
+        .add_plugins(RatatuiPlugins {
+            enable_input_forwarding: true,
+            ..default()
+        })
         .add_plugins(RatatuiCameraPlugin)
         .add_plugins(IOWidget::default())
         .add_systems(Startup, (init_picker, init_scene, init_ratatui_camera).chain())
         .add_systems(PreUpdate, refresh_picker)
-        .add_systems(Update, (draw_system, zoom_in).chain())
+        .add_systems(Update, draw_system)
         .run();
 }
 
@@ -60,26 +63,6 @@ fn main() {
 #[derive(Component)]
 #[require(Camera2d, RatatuiCamera)]
 struct MainCamera;
-
-fn zoom_in(
-    mut projection: Single<&mut Projection, With<MainCamera>>,
-    time: Res<Time>
-) {
-    match projection.as_mut() {
-        Projection::Perspective(perspective) => {
-            perspective.fov -= time.delta_secs() * 1.0;
-        },
-        Projection::Orthographic(ortho) => {
-            let mut log_scale = ortho.scale.ln();
-            log_scale -= 0.5 * time.delta_secs();
-            if log_scale < 0.001 {
-                log_scale = 10.;
-            }
-            ortho.scale = log_scale.exp();
-        },
-        Projection::Custom(_) => {},
-    }
-}
 
 fn init_ratatui_camera(mut commands: Commands) {
     commands.spawn(MainCamera);
@@ -117,24 +100,41 @@ fn refresh_picker(
 fn draw_system(
     mut context: ResMut<RatatuiContext>,
     mut camera_widget: Single<&mut RatatuiCameraWidget>,
+    mut io_widget: Single<&mut IOWidget>,
     _picker: Res<PickerResource>
 ) -> Result {
     context.draw(|frame| {
+        // main two-row layout
         let layout = Layout::new(
             Direction::Vertical,
             [Constraint::Percentage(60), Constraint::Fill(1)],
         ).split(frame.area());
 
+        // upper section two columns, IO on one side, image on the other
+        let sublayout = Layout::new(
+            Direction::Horizontal,
+            [Constraint::Percentage(70), Constraint::Fill(1)],
+        ).split(layout[0]);
+
+        let map_section = sublayout[0];
+        let io_section = sublayout[1];
+        let log_section = layout[1];
+
         frame.render_widget(
             &mut **camera_widget,
-            layout[0]
+            map_section
+        );
+
+        frame.render_widget(
+            &mut **io_widget,
+            io_section
         );
 
         frame.render_widget(
             TuiLoggerWidget::default()
                 .block(Block::bordered())
                 .style(Style::default().bg(ratatui::style::Color::Reset)),
-            layout[1]);
+            log_section);
     })?;
 
     Ok(())

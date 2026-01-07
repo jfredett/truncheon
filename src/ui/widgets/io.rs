@@ -1,4 +1,4 @@
-use bevy::{input::keyboard::KeyboardInput, prelude::*};
+use bevy::{input::{ButtonState, keyboard::KeyboardInput}, prelude::*};
 use ratatui::{layout::{Constraint, Direction, Layout}, widgets::{Block, Borders, Paragraph, Widget}};
 
 
@@ -59,7 +59,7 @@ pub struct IOWidget {
 
 impl Plugin for IOWidget {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_keyboard_io)
+        app.add_systems(PreUpdate, handle_keyboard_io)
            .add_systems(Startup, add_io_widget)
            .add_message::<CommandEvent>()
            .add_observer(log_on_execute);
@@ -154,53 +154,43 @@ pub struct Focus;
 //#[derive(Resource)]
 //struct CommandMode;
 
-// // FIXME: Replace with a bevy-level input handling, this is very slow, and I hope bevy's thing is
-// // better tied into the event loop.
-// pub fn handle_keyboard_io(
-//     mut commands: Commands,
-//     mut focus: Single<&mut IOWidget, With<Focus>>,
-//     mut messages: MessageReader<KeyMessage>,
-// ) {
-//     for message in messages.read() {
-//         match message.code {
-//             ratatui::crossterm::event::KeyCode::Enter => {
-//                 trace!("executing command");
-//                 focus.execute(&mut commands);
-//             },
-//             ratatui::crossterm::event::KeyCode::Char(c) => {
-//                 trace!("recording character");
-//                 focus.send_input_char(c);
-//             },
-//             _ => {}
-//         }
-//     }
-//     // capture input, find the current focused element, if the element is marked for accepting
-//     // input, send it along, unless it's `escape`, which means you should remove focus on the
-//     // focused element and place it on the CommandMode element.
-
-//     // if there is no focused element, then the keystrokes are sent to the CommandMode handler,
-//     // where they can be buffered as needed for parsing.
-// }
 
 pub fn handle_keyboard_io(
     mut commands: Commands,
-    mut keyboard_events: EventReader<KeyboardInput>,
+    mut keyboard_events: MessageReader<KeyboardInput>,
     mut focus: Single<&mut IOWidget, With<Focus>>,
 ) {
+    // this should maybe buffer all the events then send them at once?
+    // bouncing issues mostly related to sending the image over many times/second, need an on-demand
+    // image component I think.
+    let mut buf = String::default();
+    let mut should_execute = false;
     for event in keyboard_events.read() {
-        trace!("Key pressed: {:?}, logical key: {:?}", event.key_code, event.logical_key);
+        if event.state == ButtonState::Released {
+            continue;
+        }
+
         use bevy::input::keyboard::Key;
+        debug!("event: {:?}", event);
         match &event.logical_key {
             Key::Character(s) => {
-                trace!("recording character");
-                focus.send_input(&s.clone());
+                buf.push_str(&s.clone());
             }
             Key::Enter => {
-                trace!("executing command");
-                focus.execute(&mut commands);
+                should_execute = true;
+                break;
+            }
+            Key::Backspace => {
+                buf.pop();
             }
             _ => {}
         }
+    }
+
+    focus.send_input(&buf);
+    if should_execute {
+        debug!("executing command: {:?}", &buf);
+        focus.execute(&mut commands);
     }
 }
 
